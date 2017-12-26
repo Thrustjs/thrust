@@ -57,3 +57,11 @@ typings/
 # dotenv environment variables file
 .env
 
+.project
+.settings
+.gradle
+bin
+build
+jsfiles
+todo.txt
+
