@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import javax.script.Bindings;
 import javax.script.Invocable;
@@ -47,7 +50,21 @@ public class ThrustCore {
 	private void loadGlobalBitCodesByConfig() throws ScriptException {
 		try {
 			JSObject config = invokeFunction("getConfig");
-			String[] bitCodeNames = ((String) config.getMember("loadToGlobal")).split(",");
+			Object bitCodeNamesObject = config.getMember("loadToGlobal");
+			
+			if(bitCodeNamesObject instanceof jdk.nashorn.internal.runtime.Undefined) {
+				return;
+			}
+			
+			List<String> bitCodeNames = new ArrayList<String>();
+			
+			if(bitCodeNamesObject instanceof String) {
+				bitCodeNames.add((String) bitCodeNamesObject);
+			} else {
+				for(Map.Entry<String, Object> entry : ((ScriptObjectMirror) bitCodeNamesObject).entrySet()) {
+					bitCodeNames.add((String) entry.getValue());
+				}
+			}
 			
 			for(String bitCodeName : bitCodeNames) {
 				bitCodeName = bitCodeName.trim();

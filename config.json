@@ -1,4 +1,4 @@
 {
 	"name": "Thrust",
-	"loadToGlobal": "globalBitCode1, globalBitCode2"
+	"loadToGlobal": ["globalBitCode1", "globalBitCode2"]
 }
