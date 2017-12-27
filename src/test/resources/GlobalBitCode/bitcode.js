@@ -1,0 +1,1 @@
+globalBitCode2.prints()

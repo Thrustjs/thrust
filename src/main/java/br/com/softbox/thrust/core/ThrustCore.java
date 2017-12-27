@@ -30,16 +30,39 @@ public class ThrustCore {
 		rootScope = rootContext.getBindings(ScriptContext.ENGINE_SCOPE);
 	}
 	
-	public ThrustCore() throws ScriptException {
+	public ThrustCore() throws ScriptException, IOException {
+		ThrustUtils.loadRequireWrapper(engine, rootContext);
 		ThrustUtils.loadConfig(engine, rootContext);
+		loadGlobalBitCodesByConfig();
 		
 		//Injeção manual de um objeto 'http' com a função 'service' para testes
 		//engine.eval("var http = {service: function(n1, n2) { print('Param 1: ' + n1 + '\\nParam2: ' + n2) } }");
 	}
 	
 	public void loadScript(String fileName) throws IOException, ScriptException {
-        require(fileName);
+        require(fileName, false);
     }
+	
+	@SuppressWarnings("restriction")
+	private void loadGlobalBitCodesByConfig() throws ScriptException {
+		try {
+			JSObject config = invokeFunction("getConfig");
+			String[] bitCodeNames = ((String) config.getMember("loadToGlobal")).split(",");
+			
+			for(String bitCodeName : bitCodeNames) {
+				bitCodeName = bitCodeName.trim();
+				String bitCodeFileName = bitCodeName.startsWith("lib/") ? bitCodeName : "lib/" + bitCodeName;
+				bitCodeFileName = bitCodeFileName.endsWith(".js") ? bitCodeFileName : bitCodeFileName + ".js";
+				
+				int firstIndexToSearch = bitCodeName.lastIndexOf('/') > -1 ? bitCodeName.lastIndexOf('/') : 0;
+				bitCodeName = bitCodeName.replaceAll(".js", "").substring(firstIndexToSearch, bitCodeName.length());
+				
+				engine.eval("var " + bitCodeName + " = require('" + bitCodeFileName + "')", rootContext);
+			}
+		} catch(NoSuchMethodException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	@SuppressWarnings("restriction")
 	public JSObject eval(String expression) throws ScriptException {
@@ -81,7 +104,7 @@ public class ThrustCore {
 	}
 	
 	@SuppressWarnings("restriction")
-	public static ScriptObjectMirror require(String fileName) {
+	public static ScriptObjectMirror require(String fileName, boolean loadToGlobal) {
 		ScriptObjectMirror scriptObject = null;
 		
 		try {
@@ -90,15 +113,19 @@ public class ThrustCore {
 			
 			String scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
 			
-			Bindings reqScope = new SimpleBindings();
-			reqScope.putAll(engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE));
-			
-			ScriptContext reqContext = new SimpleScriptContext();
-			reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
-			
-			setupContext(reqContext);
-			
-			scriptObject = (ScriptObjectMirror) engine.eval(scriptContent, reqContext);
+			if(loadToGlobal) {
+				scriptObject = (ScriptObjectMirror) engine.eval(scriptContent, rootContext);
+			} else {
+				Bindings reqScope = new SimpleBindings();
+				reqScope.putAll(engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE));
+				
+				ScriptContext reqContext = new SimpleScriptContext();
+				reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
+				
+				setupContext(reqContext);
+				
+				scriptObject = (ScriptObjectMirror) engine.eval(scriptContent, reqContext);
+			}
 		} catch(IOException e) {
 			System.out.println("[ERROR] Cannot load " + fileName + " module.");
 			e.printStackTrace();
@@ -112,6 +139,5 @@ public class ThrustCore {
 
 	private static void setupContext(ScriptContext context) throws ScriptException {
 		ThrustUtils.loadPolyfills(engine, context);
-		ThrustUtils.loadRequireWrapper(engine, context);
 	}
 }

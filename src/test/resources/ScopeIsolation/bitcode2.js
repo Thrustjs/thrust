@@ -1,0 +1,1 @@
+print("bitcode2.js")
