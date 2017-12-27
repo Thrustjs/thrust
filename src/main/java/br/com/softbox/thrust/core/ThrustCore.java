@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 import javax.script.Bindings;
+import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -13,23 +14,27 @@ import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 import javax.script.SimpleScriptContext;
 
-import jdk.nashorn.api.scripting.*;
-
 import br.com.softbox.thrust.util.ThrustUtils;
+import jdk.nashorn.api.scripting.*;
 
 public class ThrustCore {
 	private static ScriptEngine engine;
 	private static ScriptContext rootContext;
+	private static Bindings rootScope;
 	
 	static {
 		System.setProperty("nashorn.args", "--language=es6");
 		
 		engine = new ScriptEngineManager().getEngineByName("nashorn");
 		rootContext = engine.getContext();
+		rootScope = rootContext.getBindings(ScriptContext.ENGINE_SCOPE);
 	}
 	
 	public ThrustCore() throws ScriptException {
 		ThrustUtils.loadConfig(engine, rootContext);
+		
+		//Injeção manual de um objeto 'http' com a função 'service' para testes
+		//engine.eval("var http = {service: function(n1, n2) { print('Param 1: ' + n1 + '\\nParam2: ' + n2) } }");
 	}
 	
 	public void loadScript(String fileName) throws IOException, ScriptException {
@@ -44,7 +49,35 @@ public class ThrustCore {
 		ScriptContext reqContext = new SimpleScriptContext();
 		reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
 		
-		return (JSObject) engine.eval(expression, reqContext);
+		JSObject result = null;
+		try {
+			result = (JSObject) engine.eval(expression, reqContext);
+		} catch(ClassCastException ignored) { }
+		
+		return result;
+	}
+	
+	@SuppressWarnings("restriction")
+	public JSObject invokeFunction(String function, Object... params) throws NoSuchMethodException, ScriptException {
+		Invocable inv = (Invocable) engine;
+		String[] fullPath = function.split("\\.");
+		
+		if(fullPath.length == 1) {
+			return (JSObject) inv.invokeFunction(function, params);
+		}
+		
+		ScriptObjectMirror scriptObjectMirror = (ScriptObjectMirror) rootScope.get(fullPath[0]);
+		int i;
+		for(i = 1; i < (fullPath.length - 1); i++) {
+			scriptObjectMirror = (ScriptObjectMirror) scriptObjectMirror.get(fullPath[i]);
+		}
+		
+		JSObject result = null;
+		try {
+			result = (JSObject) scriptObjectMirror.callMember(fullPath[i], params);
+		} catch(ClassCastException ignored) { }
+		
+		return result;
 	}
 	
 	@SuppressWarnings("restriction")
