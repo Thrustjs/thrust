@@ -15,5 +15,7 @@ public class ScopeIsolationTest extends BaseTest {
 	public void run() throws Exception {
 		Main.main(new String[] {"src/test/resources/ScopeIsolation/index.js"});
 		assertEquals("index.js\nbitcode.js\nother empty require function!\nbitcode2.js\n", outContent.toString());
+		;
 	}
 }
+
