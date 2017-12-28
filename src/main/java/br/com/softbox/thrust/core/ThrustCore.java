@@ -25,21 +25,36 @@ public class ThrustCore {
 	private static ScriptContext rootContext;
 	private static Bindings rootScope;
 	
+	private static String rootPath;
+	
 	static {
 		System.setProperty("nashorn.args", "--language=es6");
 		
 		engine = new ScriptEngineManager().getEngineByName("nashorn");
 		rootContext = engine.getContext();
 		rootScope = rootContext.getBindings(ScriptContext.ENGINE_SCOPE);
+		rootPath = new File("").getAbsolutePath();
 	}
 	
 	public ThrustCore() throws ScriptException, IOException {
-		ThrustUtils.loadRequireWrapper(engine, rootContext);
-		ThrustUtils.loadConfig(engine, rootContext);
-		loadGlobalBitCodesByConfig();
+		initialize();
+	}
+	
+	public ThrustCore(String applicationName) throws ScriptException, IOException {
+		String thrustDirectory = System.getProperty("thrust.root.path");
+		if(thrustDirectory == null || "".equals(thrustDirectory)) {
+			throw new IllegalStateException("[ERROR] System property \"thrust.root.path\" not set. Please, define it.");
+		}
 		
-		//Injeção manual de um objeto 'http' com a função 'service' para testes
-		//engine.eval("var http = {service: function(n1, n2) { print('Param 1: ' + n1 + '\\nParam2: ' + n2) } }");
+		rootPath = thrustDirectory + File.separator + applicationName;
+		validateRootPath();
+		initialize();
+	}
+	
+	private void initialize() throws ScriptException, IOException {
+		ThrustUtils.loadRequireWrapper(engine, rootContext);
+		ThrustUtils.loadConfig(rootPath, engine, rootContext);
+		loadGlobalBitCodesByConfig();
 	}
 	
 	public void loadScript(String fileName) throws IOException, ScriptException {
@@ -107,8 +122,8 @@ public class ThrustCore {
 		}
 		
 		ScriptObjectMirror scriptObjectMirror = (ScriptObjectMirror) rootScope.get(fullPath[0]);
-		int i;
-		for(i = 1; i < (fullPath.length - 1); i++) {
+		int i = 1;
+		for(;i < (fullPath.length - 1); i++) {
 			scriptObjectMirror = (ScriptObjectMirror) scriptObjectMirror.get(fullPath[i]);
 		}
 		
@@ -126,7 +141,7 @@ public class ThrustCore {
 		
 		try {
 			String fileNameNormalized = fileName.endsWith(".js") ? fileName : fileName.concat(".js");
-			File scriptFile = new File(fileNameNormalized);
+			File scriptFile = new File(rootPath + File.separator + fileNameNormalized);
 			
 			String scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
 			
@@ -152,6 +167,13 @@ public class ThrustCore {
 		}
 		
 		return scriptObject;
+	}
+	
+	private static void validateRootPath() {
+		File file = new File(rootPath);
+		if(!file.exists()) {
+			throw new IllegalStateException("[ERROR] Invalid rootPath: \"" + rootPath + "\".");
+		}
 	}
 
 	private static void setupContext(ScriptContext context) throws ScriptException {
