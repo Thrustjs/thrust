@@ -1,4 +1,4 @@
 {
-	"name": "Thrust",
+	"transpileScripts": false,
 	"loadToGlobal": ["globalBitCode1", "globalBitCode2"]
 }

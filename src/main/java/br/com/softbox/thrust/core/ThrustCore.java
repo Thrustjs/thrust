@@ -1,12 +1,18 @@
 package br.com.softbox.thrust.core;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.script.Bindings;
 import javax.script.Invocable;
@@ -27,6 +33,14 @@ public class ThrustCore {
 	
 	private static String rootPath;
 	
+	@SuppressWarnings("restriction")
+	private static JSObject config;
+	
+	private static boolean transpileScripts = false;
+	private static Map<String, ScriptInfo> scriptCache = new HashMap<String, ScriptInfo>();
+	
+	private static final String LIB_PATH = "lib";
+	
 	static {
 		System.setProperty("nashorn.args", "--language=es6");
 		
@@ -36,11 +50,11 @@ public class ThrustCore {
 		rootPath = new File("").getAbsolutePath();
 	}
 	
-	public ThrustCore() throws ScriptException, IOException {
+	public ThrustCore() throws ScriptException, IOException, NoSuchMethodException {
 		initialize();
 	}
 	
-	public ThrustCore(String applicationName) throws ScriptException, IOException {
+	public ThrustCore(String applicationName) throws ScriptException, IOException, NoSuchMethodException {
 		String thrustDirectory = System.getProperty("thrust.root.path");
 		if(thrustDirectory == null || "".equals(thrustDirectory)) {
 			throw new IllegalStateException("[ERROR] System property \"thrust.root.path\" not set. Please, define it.");
@@ -51,49 +65,69 @@ public class ThrustCore {
 		initialize();
 	}
 	
-	private void initialize() throws ScriptException, IOException {
+	@SuppressWarnings("restriction")
+	private void initialize() throws ScriptException, IOException, NoSuchMethodException {
 		ThrustUtils.loadRequireWrapper(engine, rootContext);
-		ThrustUtils.loadConfig(rootPath, engine, rootContext);
-		loadGlobalBitCodesByConfig();
+		ThrustUtils.loadGetConfigFunction(rootPath, engine, rootContext);
+		
+		readConfig();
+		
+		Object transpile = config.getMember("transpileScripts");
+		if(transpile instanceof Boolean) {
+			transpileScripts = (boolean) transpile;
+		}
+		
+		if(transpileScripts != false) {
+			requireBabelToGlobal();
+		}
+		
+		requireGlobalBitCodesByConfig();
 	}
 	
 	public void loadScript(String fileName) throws IOException, ScriptException {
         require(fileName, false);
     }
 	
+	private void readConfig() throws NoSuchMethodException, ScriptException {
+		config = invokeFunction("getConfig");
+	}
+	
 	@SuppressWarnings("restriction")
-	private void loadGlobalBitCodesByConfig() throws ScriptException {
-		try {
-			JSObject config = invokeFunction("getConfig");
-			Object bitCodeNamesObject = config.getMember("loadToGlobal");
-			
-			if(bitCodeNamesObject instanceof jdk.nashorn.internal.runtime.Undefined) {
-				return;
-			}
-			
-			List<String> bitCodeNames = new ArrayList<String>();
-			
-			if(bitCodeNamesObject instanceof String) {
-				bitCodeNames.add((String) bitCodeNamesObject);
-			} else {
-				for(Map.Entry<String, Object> entry : ((ScriptObjectMirror) bitCodeNamesObject).entrySet()) {
-					bitCodeNames.add((String) entry.getValue());
-				}
-			}
-			
-			for(String bitCodeName : bitCodeNames) {
-				bitCodeName = bitCodeName.trim();
-				String bitCodeFileName = bitCodeName.startsWith("lib/") ? bitCodeName : "lib/" + bitCodeName;
-				bitCodeFileName = bitCodeFileName.endsWith(".js") ? bitCodeFileName : bitCodeFileName + ".js";
-				
-				int firstIndexToSearch = bitCodeName.lastIndexOf('/') > -1 ? bitCodeName.lastIndexOf('/') : 0;
-				bitCodeName = bitCodeName.replaceAll(".js", "").substring(firstIndexToSearch, bitCodeName.length());
-				
-				engine.eval("var " + bitCodeName + " = require('" + bitCodeFileName + "')", rootContext);
-			}
-		} catch(NoSuchMethodException e) {
-			e.printStackTrace();
+	private void requireGlobalBitCodesByConfig() throws ScriptException, IOException {
+		Object bitCodeNamesObject = config.getMember("loadToGlobal");
+		
+		if(bitCodeNamesObject instanceof jdk.nashorn.internal.runtime.Undefined) {
+			return;
 		}
+		
+		List<String> bitCodeNames = new ArrayList<String>();
+		
+		if(bitCodeNamesObject instanceof String) {
+			bitCodeNames.add((String) bitCodeNamesObject);
+		} else {
+			for(Map.Entry<String, Object> entry : ((ScriptObjectMirror) bitCodeNamesObject).entrySet()) {
+				bitCodeNames.add((String) entry.getValue());
+			}
+		}
+		
+		for(String bitCodeName : bitCodeNames) {
+			bitCodeName = bitCodeName.trim();
+			String bitCodeFileName = bitCodeName.startsWith(LIB_PATH + "/") ? bitCodeName : LIB_PATH + "/" + bitCodeName;
+			bitCodeFileName = bitCodeFileName.endsWith(".js") ? bitCodeFileName : bitCodeFileName + ".js";
+			
+			int firstIndexToSearch = bitCodeName.lastIndexOf('/') > -1 ? bitCodeName.lastIndexOf('/') : 0;
+			bitCodeName = bitCodeName.replaceAll(".js", "").substring(firstIndexToSearch, bitCodeName.length());
+			
+			engine.eval("var " + bitCodeName + " = require('" + bitCodeFileName + "')", rootContext);
+		}
+	}
+	
+	private void requireBabelToGlobal() throws ScriptException, IOException {
+		//ClassLoader classLoader = getClass().getClassLoader();
+		InputStream in = getClass().getResourceAsStream("/babel.min.js"); 
+		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+		String babelStr = reader.lines().collect(Collectors.joining());
+		engine.eval("var babelString = '" + babelStr + "'; eval(babelString);");
 	}
 	
 	@SuppressWarnings("restriction")
@@ -141,13 +175,22 @@ public class ThrustCore {
 		
 		try {
 			String fileNameNormalized = fileName.endsWith(".js") ? fileName : fileName.concat(".js");
-			File scriptFile = new File(rootPath + File.separator + fileNameNormalized);
+			String scriptPath = rootPath + File.separator + fileNameNormalized;
+			File scriptFile = new File(scriptPath);
+			String scriptContent = null;
 			
-			String scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
+			/*Cache control mechanism*/
+			if(scriptCache.containsKey(scriptPath) && scriptCache.get(scriptPath).getLoadTime() >= scriptFile.lastModified()) {
+				scriptContent = scriptCache.get(scriptPath).getContent();
+			} else {
+				scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
+				updateScriptCache(scriptFile, scriptContent);
+			}
 			
 			if(loadToGlobal) {
 				scriptObject = (ScriptObjectMirror) engine.eval(scriptContent, rootContext);
 			} else {
+				
 				Bindings reqScope = new SimpleBindings();
 				reqScope.putAll(engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE));
 				
@@ -156,7 +199,23 @@ public class ThrustCore {
 				
 				setupContext(reqContext);
 				
-				scriptObject = (ScriptObjectMirror) engine.eval(scriptContent, reqContext);
+				if(transpileScripts) {
+					//TODO: O código abaixo não executa o index.js, por conta da falta de ; antes do exports
+					if(rootContext.getAttribute("Babel") != null) {
+						scriptContent = "Babel.transform(\"" + scriptContent.replaceAll("\n", " \t\\\\\n").replaceAll("\\\"", "\\\\\"") + "\", {presets:  [ [\"es2015\"] ]} ).code.replace('\"use strict\";', '')";
+						scriptContent = (String) engine.eval(scriptContent, reqContext);
+					}
+				}
+				
+				if(scriptContent != null) {
+					Object result = engine.eval(scriptContent, reqContext);
+					if(result instanceof ScriptObjectMirror) {
+						scriptObject = (ScriptObjectMirror) result;
+					}
+				}
+				
+				//TODO: gravar em arquivo o conteúdo transpilado
+				updateScriptCache(scriptFile, scriptContent);
 			}
 		} catch(IOException e) {
 			System.out.println("[ERROR] Cannot load " + fileName + " module.");
@@ -167,6 +226,16 @@ public class ThrustCore {
 		}
 		
 		return scriptObject;
+	}
+	
+	private static void updateScriptCache(File scriptFile, String scriptContent) {
+		if(!scriptCache.containsKey(scriptFile.getAbsolutePath())) {
+			ScriptInfo scriptInfo = new ScriptInfo(scriptContent, new Date().getTime());
+			scriptCache.put(scriptFile.getAbsolutePath(), scriptInfo);
+		} else {
+			ScriptInfo scriptInfo = scriptCache.get(scriptFile.getAbsolutePath());
+			scriptInfo.setContent(scriptContent);
+		}
 	}
 	
 	private static void validateRootPath() {
