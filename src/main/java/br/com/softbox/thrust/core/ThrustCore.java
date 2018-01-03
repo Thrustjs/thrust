@@ -5,6 +5,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -35,11 +38,15 @@ public class ThrustCore {
 	
 	@SuppressWarnings("restriction")
 	private static JSObject config;
-	
+
 	private static boolean transpileScripts = false;
 	private static Map<String, ScriptInfo> scriptCache = new HashMap<String, ScriptInfo>();
 	
 	private static final String LIB_PATH = "lib";
+	
+	private static final ThreadLocal<String> tlCurrentDir = new ThreadLocal<String>();
+	
+	private static final Method addToClassLoaderMethod;
 	
 	static {
 		System.setProperty("nashorn.args", "--language=es6");
@@ -48,6 +55,13 @@ public class ThrustCore {
 		rootContext = engine.getContext();
 		rootScope = rootContext.getBindings(ScriptContext.ENGINE_SCOPE);
 		rootPath = new File("").getAbsolutePath();
+		
+		try {
+			addToClassLoaderMethod = URLClassLoader.class.getDeclaredMethod("addURL", new Class<?>[] {URL.class});
+			addToClassLoaderMethod.setAccessible(true);
+		} catch (Exception e) {
+			throw new IllegalArgumentException("[ERROR] Cannot get 'addURL' method from URLClassLoader");
+		}
 	}
 	
 	public ThrustCore() throws ScriptException, IOException, NoSuchMethodException {
@@ -68,6 +82,7 @@ public class ThrustCore {
 	@SuppressWarnings("restriction")
 	private void initialize() throws ScriptException, IOException, NoSuchMethodException {
 		ThrustUtils.loadRequireWrapper(engine, rootContext);
+		ThrustUtils.loadJarWrapper(engine, rootContext);
 		ThrustUtils.loadGetConfigFunction(rootPath, engine, rootContext);
 		
 		readConfig();
@@ -85,7 +100,7 @@ public class ThrustCore {
 	}
 	
 	public void loadScript(String fileName) throws IOException, ScriptException {
-        require(fileName, false);
+        require(fileName, false, true);
     }
 	
 	private void readConfig() throws NoSuchMethodException, ScriptException {
@@ -112,8 +127,7 @@ public class ThrustCore {
 		
 		for(String bitCodeName : bitCodeNames) {
 			bitCodeName = bitCodeName.trim();
-			String bitCodeFileName = bitCodeName.startsWith(LIB_PATH + "/") ? bitCodeName : LIB_PATH + "/" + bitCodeName;
-			bitCodeFileName = bitCodeFileName.endsWith(".js") ? bitCodeFileName : bitCodeFileName + ".js";
+			String bitCodeFileName = bitCodeName.endsWith(".js") ? bitCodeName : bitCodeName + ".js";
 			
 			int firstIndexToSearch = bitCodeName.lastIndexOf('/') > -1 ? bitCodeName.lastIndexOf('/') : 0;
 			bitCodeName = bitCodeName.replaceAll(".js", "").substring(firstIndexToSearch, bitCodeName.length());
@@ -171,51 +185,120 @@ public class ThrustCore {
 	
 	@SuppressWarnings("restriction")
 	public static ScriptObjectMirror require(String fileName, boolean loadToGlobal) {
+		return require(fileName, loadToGlobal, false);
+	}
+	
+	@SuppressWarnings("restriction")
+	public static ScriptObjectMirror require(String fileName, boolean loadToGlobal, boolean strictRequire) {
 		ScriptObjectMirror scriptObject = null;
 		
 		try {
-			String fileNameNormalized = fileName.endsWith(".js") ? fileName : fileName.concat(".js");
-			String scriptPath = rootPath + File.separator + fileNameNormalized;
-			File scriptFile = new File(scriptPath);
-			String scriptContent = null;
 			
-			/*Cache control mechanism*/
-			if(scriptCache.containsKey(scriptPath) && scriptCache.get(scriptPath).getLoadTime() >= scriptFile.lastModified()) {
-				scriptContent = scriptCache.get(scriptPath).getContent();
+			boolean relativeRequire = fileName.startsWith("./") || fileName.startsWith("../");
+			
+			List<String> possibleFileNames = new ArrayList<String>();
+			
+			if (fileName.endsWith(".js")) {
+				possibleFileNames.add(fileName);
 			} else {
-				scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
-				updateScriptCache(scriptFile, scriptContent);
+
+				if (!strictRequire) {
+					possibleFileNames.add(fileName + File.separator + "index.js");
+				}
+				
+				possibleFileNames.add(fileName.concat(".js"));
 			}
 			
-			if(loadToGlobal) {
-				scriptObject = (ScriptObjectMirror) engine.eval(scriptContent, rootContext);
+			List<String> possiblePaths = new ArrayList<String>();
+			
+			if (strictRequire) {
+				possiblePaths.add(rootPath);
 			} else {
+				String currentDir = tlCurrentDir.get();
 				
-				Bindings reqScope = new SimpleBindings();
-				reqScope.putAll(engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE));
-				
-				ScriptContext reqContext = new SimpleScriptContext();
-				reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
-				
-				setupContext(reqContext);
-				
-				if(transpileScripts) {
-					//TODO: O código abaixo não executa o index.js, por conta da falta de ; antes do exports
-					if(rootContext.getAttribute("Babel") != null) {
-						scriptContent = "Babel.transform(\"" + scriptContent.replaceAll("\n", " \t\\\\\n").replaceAll("\\\"", "\\\\\"") + "\", {presets:  [ [\"es2015\"] ]} ).code.replace('\"use strict\";', '')";
-						scriptContent = (String) engine.eval(scriptContent, reqContext);
-					}
+				if (currentDir != null && !rootPath.equals(currentDir)) {
+					possiblePaths.add(currentDir);	
 				}
 				
-				if(scriptContent != null) {
-					Object result = engine.eval(scriptContent, reqContext);
-					if(result instanceof ScriptObjectMirror) {
-						scriptObject = (ScriptObjectMirror) result;
+				if (relativeRequire) {
+					possiblePaths.add(rootPath);
+				} else {
+					possiblePaths.add(rootPath + File.separator + LIB_PATH);
+				}
+			}
+
+			String scriptPath = null;
+			String scriptContent = null;
+			File scriptFile = null;
+		
+			outer: for (String basePath : possiblePaths) {
+				for (String possibleName : possibleFileNames) {
+					scriptPath = basePath + File.separator + possibleName;
+					scriptFile = new File(scriptPath);
+					
+//						scriptInfo = scriptCache.get(scriptPath);
+//						
+//						if (scriptInfo != null && scriptInfo.getLoadTime() > scriptFile.lastModified()) {
+//							scriptContent = scriptInfo.getContent();
+//						} else if (scriptFile.exists()){
+//							scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
+//							updateScriptCache(scriptFile, scriptContent);
+//						}
+					
+					
+					if (scriptFile.exists()){
+						scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
+						updateScriptCache(fileName, scriptFile, scriptContent);
+					}
+					
+					if (scriptContent != null) {
+						break outer;
 					}
 				}
+			}
+			
+			if (scriptContent == null) {
+				throw new IllegalArgumentException("[ERROR] Cannot find " + fileName + " module.");
+			}
+			
+			String oldCurrDir = tlCurrentDir.get();
+			
+			try {
+				//Empilhamos o path atual para que seja considerado em requires futuros.
+				tlCurrentDir.set(scriptFile.getParent());
 				
-				//TODO: gravar em arquivo o conteúdo transpilado
-				updateScriptCache(scriptFile, scriptContent);
+				if(loadToGlobal) {
+					scriptObject = (ScriptObjectMirror) engine.eval(scriptContent, rootContext);
+				} else {
+					Bindings reqScope = new SimpleBindings();
+					reqScope.putAll(engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE));
+					
+					ScriptContext reqContext = new SimpleScriptContext();
+					reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
+					
+					setupContext(reqContext);
+					
+					if(transpileScripts) {
+						//TODO: O código abaixo não executa o index.js, por conta da falta de ; antes do exports
+						if(rootContext.getAttribute("Babel") != null) {
+							scriptContent = "Babel.transform(\"" + scriptContent.replaceAll("\n", " \t\\\\\n").replaceAll("\\\"", "\\\\\"") + "\", {presets:  [ [\"es2015\"] ]} ).code.replace('\"use strict\";', '')";
+							scriptContent = (String) engine.eval(scriptContent, reqContext);
+							
+							//TODO: gravar em arquivo o conteúdo transpilado
+							updateScriptCache(fileName, scriptFile, scriptContent);
+						}
+					}
+					
+					if(scriptContent != null) {
+						Object result = engine.eval(scriptContent, reqContext);
+						if(result instanceof ScriptObjectMirror) {
+							scriptObject = (ScriptObjectMirror) result;
+						}
+					}
+				}
+			} finally {
+				//Desempilhamos o path atual
+				tlCurrentDir.set(oldCurrDir);
 			}
 		} catch(IOException e) {
 			System.out.println("[ERROR] Cannot load " + fileName + " module.");
@@ -228,12 +311,31 @@ public class ThrustCore {
 		return scriptObject;
 	}
 	
-	private static void updateScriptCache(File scriptFile, String scriptContent) {
-		if(!scriptCache.containsKey(scriptFile.getAbsolutePath())) {
-			ScriptInfo scriptInfo = new ScriptInfo(scriptContent, new Date().getTime());
-			scriptCache.put(scriptFile.getAbsolutePath(), scriptInfo);
+	public static void loadJar(String jarName) {
+		String searchPath = tlCurrentDir.get();
+		
+		if (searchPath == null) {
+			searchPath = rootPath;
+		}
+		
+		try {
+			File jarFile = new File(searchPath + File.separator + jarName);
+			
+			if (jarFile.exists()) {
+				addToClassLoaderMethod.invoke(ClassLoader.getSystemClassLoader(), jarFile.toURI().toURL());
+			}
+		} catch (Exception e) {
+			throw new IllegalArgumentException("[ERROR] Cannot load .jar: " + jarName);
+		}
+	}
+	
+	private static void updateScriptCache(String fileName, File scriptFile, String scriptContent) {
+		ScriptInfo scriptInfo = scriptCache.get(fileName);
+		
+		if (scriptInfo == null) {
+			scriptInfo = new ScriptInfo(scriptContent, new Date().getTime(), scriptFile);
+			scriptCache.put(fileName, scriptInfo);
 		} else {
-			ScriptInfo scriptInfo = scriptCache.get(scriptFile.getAbsolutePath());
 			scriptInfo.setContent(scriptContent);
 		}
 	}

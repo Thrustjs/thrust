@@ -13,7 +13,8 @@ import javax.script.ScriptException;
 
 public class ThrustUtils {
 	private static String polyfills = "var exports = {}; if (!Object.assign) {     Object.defineProperty(Object, 'assign', {         enumerable: false,         configurable: true,         writable: true,         value: function (target) {             'use strict';             if (target === undefined || target === null) {                 throw new TypeError('Cannot convert first argument to object');             }              var to = Object(target);             for (var i = 1; i < arguments.length; i++) {                 var nextSource = arguments[i];                 if (nextSource === undefined || nextSource === null) {                     continue;                 }                 nextSource = Object(nextSource);                  var keysArray = Object.keys(Object(nextSource));                 for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {                     var nextKey = keysArray[nextIndex];                     var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);                     if (desc !== undefined && desc.enumerable) {                         to[nextKey] = nextSource[nextKey];                     }                 }             }             return to;         }     }); }   if (!Object.values) {     Object.values = function values(target) {         return Object.getOwnPropertyNames(target).map(function (k) {             return target[k]         })     } }   if (!Array.prototype.find) {     Object.defineProperty(Array.prototype, 'find', {         value: function (predicate) {             if (this == null) {                 throw new TypeError('\"this\" is null or not defined');             }              var o = Object(this);             var len = o.length >>> 0;              if (typeof predicate !== 'function') {                 throw new TypeError('predicate must be a function');             }              var thisArg = arguments[1];             var k = 0;              while (k < len) {                 var kValue = o[k];                 if (predicate.call(thisArg, kValue, k, o)) {                     return kValue;                 }                 k++;             }              return undefined;         }     }); } ";
-	private static String requireWrapper = "function require(fileName) {  const ThrustCore = Java.type(\"br.com.softbox.thrust.core.ThrustCore\");  const map = ThrustCore.require(fileName, false);  const attrs = {};  for (var key in map) {    if(key !== \"module\") {      attrs[key] = map[key];    } else {      for(var exportsKey in map[key].exports) {        attrs[exportsKey] = map[key[exportsKey]];      }    }  }  return attrs;} ";
+	private static String requireWrapper = "function require(fileName, loadToGlobal, strictRequire) { const ThrustCore = Java.type(\"br.com.softbox.thrust.core.ThrustCore\"); const map = ThrustCore.require(fileName, loadToGlobal, strictRequire);  const attrs = {};  for (var key in map) {    if(key !== \"module\") {      attrs[key] = map[key];    } else {      for(var exportsKey in map[key].exports) {        attrs[exportsKey] = map[key[exportsKey]];      }    }  }  return attrs;} ";
+	private static String loadJarWrapper = "function loadJar(fileName) {const ThrustCore = Java.type(\"br.com.softbox.thrust.core.ThrustCore\");  ThrustCore.loadJar(fileName);}";
 	private static String configStr = null;
 
 	public static void loadPolyfills(ScriptEngine engine, ScriptContext context) throws ScriptException {
@@ -22,6 +23,10 @@ public class ThrustUtils {
 
 	public static void loadRequireWrapper(ScriptEngine engine, ScriptContext context) throws ScriptException {
 		loadOnContext(engine, context, requireWrapper);
+	}
+	
+	public static void loadJarWrapper(ScriptEngine engine, ScriptContext context) throws ScriptException {
+		loadOnContext(engine, context, loadJarWrapper);
 	}
 
 	public static void loadGetConfigFunction(String rootPath, ScriptEngine engine, ScriptContext context)

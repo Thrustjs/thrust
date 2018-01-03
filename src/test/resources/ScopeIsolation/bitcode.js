@@ -5,4 +5,4 @@ require = function() {
 this.require = function() {
 	print("other empty require function!")
 }
-require("/anypath")
+require("./anypath")
