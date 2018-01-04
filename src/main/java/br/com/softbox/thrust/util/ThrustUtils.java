@@ -22,22 +22,18 @@ public class ThrustUtils {
 	private static String configStr = null;
 	
 	static {
+		requireWrapper = loadResource("/requireWrapper.js");
+		loadJarWrapper = loadResource("/loadJarWrapper.js");
+	}
+
+	private static String loadResource(String resourceName) {
 		try {
-			InputStream in = ThrustUtils.class.getResourceAsStream("/requireWrapper.js"); 
+			InputStream in = ThrustUtils.class.getResourceAsStream(resourceName); 
 			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-			requireWrapper = reader.lines().collect(Collectors.joining());
+			return reader.lines().collect(Collectors.joining());
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new IllegalStateException("Não foi possível carregar o requireWrapper.js", e);
-		}
-		
-		try {
-			InputStream in = ThrustUtils.class.getResourceAsStream("/loadJarWrapper.js"); 
-			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-			loadJarWrapper = reader.lines().collect(Collectors.joining());
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new IllegalStateException("Não foi possível carregar o loadJarWrapper.js", e);
+			throw new IllegalStateException("Não foi possível carregar o resource " + resourceName, e);
 		}
 	}
 	

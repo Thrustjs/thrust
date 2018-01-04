@@ -1,24 +1,51 @@
 package br.com.softbox.thrust.main;
 
-import br.com.softbox.thrust.core.ThrustCore;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+import br.com.softbox.thrust.main.cli.MainCLI;
+import picocli.CommandLine;
+import picocli.CommandLine.ExecutionException;
+import picocli.CommandLine.ParameterException;
 
 public class Main {
-	public static void main(String[] args) {
-		if(args.length < 1) {
+	public static void main(String[] args) throws Exception {
+		MainCLI cli = new MainCLI();
+		CommandLine top = new CommandLine(cli);
+		cli.setCommandLine(top);
+
+		List<CommandLine> parsedCommands;
+
+		try {
+			parsedCommands = top.parse(args);
+		} catch (ParameterException ex) {
+			System.err.println(ex.getMessage());
+			ex.getCommandLine().usage(System.err);
 			return;
 		}
-		
-		if(args[0].startsWith("-")) {
-			//TODO: implement options mechanism
-			System.out.println("Sorry, options mechanism not implemented yet. Please, try again in next versions.");
-		} else {
-			try {
-				ThrustCore thrustCore = new ThrustCore();
-				String mainScript = ThrustCore.require(args[0], true);
-				thrustCore.eval(mainScript);
-			} catch (Exception e) {
-				e.printStackTrace();
+
+		for (CommandLine parsed : parsedCommands) {
+			if (parsed.isUsageHelpRequested()) {
+				parsed.usage(System.err);
+				return;
+			} else if (parsed.isVersionHelpRequested()) {
+				parsed.printVersionHelp(System.err);
+				return;
 			}
+		}
+
+		Object last = parsedCommands.get(parsedCommands.size() - 1).getCommand();
+
+		try {
+			if (last instanceof Runnable) {
+				((Runnable) last).run();
+			} else if (last instanceof Callable) {
+				((Callable<?>) last).call();
+			} else {
+				throw new ExecutionException(top, "Not a Runnable or Callable");
+			}
+		} catch (ExecutionException ex) {
+			ex.getCommandLine().usage(System.err);
 		}
 	}
 }

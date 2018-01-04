@@ -1,11 +1,11 @@
-function require(fileName) {
+function require(fileName, strictRequire) {
 	const ThrustCore = Java.type("br.com.softbox.thrust.core.ThrustCore");
 	
 	return (function(){
 		var exports = {};
 		var attrs = {};
 
-		const moduleContent = ThrustCore.require(fileName);
+		const moduleContent = ThrustCore.require(fileName, strictRequire);
 		
 		var map = eval(moduleContent);
 		

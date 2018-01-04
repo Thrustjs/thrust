@@ -100,8 +100,8 @@ public class ThrustCore {
 		requireGlobalBitCodesByConfig();
 	}
 	
-	public void loadScript(String fileName) throws IOException, ScriptException {
-        require(fileName, false);
+	public void loadScript(String fileName) throws Exception {
+        require(fileName, true);
     }
 	
 	private void readConfig() throws NoSuchMethodException, ScriptException {
@@ -186,58 +186,80 @@ public class ThrustCore {
 		
 		return result;
 	}
-	
-	@SuppressWarnings("restriction")
-	public static ScriptObjectMirror require(String fileName, boolean loadToGlobal) {
-		ScriptObjectMirror scriptObject = null;
+		
+	public static String require(String fileName, boolean strictRequire) throws Exception {
+		String scriptContent = null;
 		
 		try {
-			String fileNameNormalized = fileName.endsWith(".js") ? fileName : fileName.concat(".js");
-			String scriptPath = rootPath + File.separator + fileNameNormalized;
-			File scriptFile = new File(scriptPath);
-			String scriptContent = null;
+			boolean relativeRequire = fileName.startsWith("./") || fileName.startsWith("../");
 			
-			/*Cache control mechanism*/
-			if(scriptCache.containsKey(scriptPath) && scriptCache.get(scriptPath).getLoadTime() >= scriptFile.lastModified()) {
-				scriptContent = scriptCache.get(scriptPath).getContent();
+			List<String> possibleFileNames = new ArrayList<String>();
+			
+			if (fileName.endsWith(".js")) {
+				possibleFileNames.add(fileName);
 			} else {
-				scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
-				updateScriptCache(scriptFile, scriptContent);
+
+				if (!strictRequire) {
+					possibleFileNames.add(fileName + File.separator + "index.js");
+				}
+				
+				possibleFileNames.add(fileName.concat(".js"));
 			}
 			
-			if(loadToGlobal) {
-				scriptObject = (ScriptObjectMirror) engine.eval(scriptContent, rootContext);
+			List<String> possiblePaths = new ArrayList<String>();
+			
+			if (strictRequire) {
+				possiblePaths.add(rootPath);
 			} else {
+				String currentDir = tlCurrentDir.get();
 				
-				Bindings reqScope = new SimpleBindings();
-				reqScope.putAll(engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE));
+				if (currentDir != null && !rootPath.equals(currentDir)) {
+					possiblePaths.add(currentDir);	
+				}
 				
-				ScriptContext reqContext = new SimpleScriptContext();
-				reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
+				if (relativeRequire) {
+					possiblePaths.add(rootPath);
+				} else {
+					possiblePaths.add(rootPath + File.separator + LIB_PATH);
+				}
+			}
+			
+			String scriptPath = null;
+			File scriptFile = null;
+			ScriptInfo scriptInfo = null;
+			
+			outer: for (String basePath : possiblePaths) {
+				for (String possibleName : possibleFileNames) {
+					scriptPath = basePath + File.separator + possibleName;
+					scriptFile = new File(scriptPath);
 				
-				setupContext(reqContext);
-				
-				if(transpileScripts) {
-					//TODO: O código abaixo não executa o index.js, por conta da falta de ; antes do exports
-					if(rootContext.getAttribute("Babel") != null) {
-						scriptContent = "Babel.transform(\"" + scriptContent.replaceAll("\n", " \t\\\\\n").replaceAll("\\\"", "\\\\\"") + "\", {presets:  [ [\"es2015\"] ]} ).code.replace('\"use strict\";', '')";
-						scriptContent = (String) engine.eval(scriptContent, reqContext);
-					}
+					scriptInfo = scriptCache.get(scriptPath);
 					
+					if (scriptInfo != null && scriptInfo.getLoadTime() > scriptFile.lastModified()) {
+						scriptContent = scriptInfo.getContent();
+					} else if (scriptFile.exists()){
+						scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
+						
+						if(transpileScripts) {
+							//TODO: O código abaixo não executa o index.js, por conta da falta de ; antes do exports
+							if(rootContext.getAttribute("Babel") != null) {
+								scriptContent = "Babel.transform(\"" + scriptContent.replaceAll("\n", " \t\\\\\n").replaceAll("\\\"", "\\\\\"") + "\", {presets:  [ [\"es2015\"] ]} ).code.replace('\"use strict\";', '')";
+								scriptContent = (String) engine.eval(scriptContent, rootContext);
+							}
+						}
+						
+						updateScriptCache(scriptFile, scriptContent);
+					}
+				
 					if (scriptContent != null) {
+						tlCurrentDir.set(scriptFile.getParent());
 						break outer;
 					}
 				}
-				
-				if(scriptContent != null) {
-					Object result = engine.eval(scriptContent, reqContext);
-					if(result instanceof ScriptObjectMirror) {
-						scriptObject = (ScriptObjectMirror) result;
-					}
-				}
-				
-				//TODO: gravar em arquivo o conteúdo transpilado
-				updateScriptCache(scriptFile, scriptContent);
+			}
+		
+			if (scriptContent == null) {
+				throw new IllegalArgumentException("[ERROR] Cannot find " + fileName + " module.");
 			}
 		} catch(IOException e) {
 			System.out.println("[ERROR] Cannot load " + fileName + " module.");
@@ -265,12 +287,12 @@ public class ThrustCore {
 		}
 	}
 	
-	private static void updateScriptCache(String fileName, File scriptFile, String scriptContent) {
-		ScriptInfo scriptInfo = scriptCache.get(fileName);
+	private static void updateScriptCache(File scriptFile, String scriptContent) {
+		ScriptInfo scriptInfo = scriptCache.get(scriptFile.getAbsolutePath());
 		
 		if (scriptInfo == null) {
 			scriptInfo = new ScriptInfo(scriptContent, new Date().getTime(), scriptFile);
-			scriptCache.put(fileName, scriptInfo);
+			scriptCache.put(scriptFile.getAbsolutePath(), scriptInfo);
 		} else {
 			scriptInfo.setContent(scriptContent);
 		}
