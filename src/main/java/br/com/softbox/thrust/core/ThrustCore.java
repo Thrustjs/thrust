@@ -27,7 +27,8 @@ import javax.script.SimpleBindings;
 import javax.script.SimpleScriptContext;
 
 import br.com.softbox.thrust.util.ThrustUtils;
-import jdk.nashorn.api.scripting.*;
+import jdk.nashorn.api.scripting.JSObject;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
 public class ThrustCore {
 	private static ScriptEngine engine;
@@ -100,7 +101,7 @@ public class ThrustCore {
 	}
 	
 	public void loadScript(String fileName) throws IOException, ScriptException {
-        require(fileName, false, true);
+        require(fileName, false);
     }
 	
 	private void readConfig() throws NoSuchMethodException, ScriptException {
@@ -146,11 +147,14 @@ public class ThrustCore {
 	
 	@SuppressWarnings("restriction")
 	public JSObject eval(String expression) throws ScriptException {
-		Bindings reqScope = new SimpleBindings();
-		reqScope.putAll(engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE));
-		
 		ScriptContext reqContext = new SimpleScriptContext();
-		reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
+        Bindings reqScope = new SimpleBindings();
+
+        reqScope.putAll(rootScope);
+        reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
+        reqScope.put("reqContext", reqContext);
+
+		setupContext(reqContext);
 		
 		JSObject result = null;
 		try {
@@ -185,130 +189,62 @@ public class ThrustCore {
 	
 	@SuppressWarnings("restriction")
 	public static ScriptObjectMirror require(String fileName, boolean loadToGlobal) {
-		return require(fileName, loadToGlobal, false);
-	}
-	
-	@SuppressWarnings("restriction")
-	public static ScriptObjectMirror require(String fileName, boolean loadToGlobal, boolean strictRequire) {
 		ScriptObjectMirror scriptObject = null;
 		
 		try {
-			
-			boolean relativeRequire = fileName.startsWith("./") || fileName.startsWith("../");
-			
-			List<String> possibleFileNames = new ArrayList<String>();
-			
-			if (fileName.endsWith(".js")) {
-				possibleFileNames.add(fileName);
-			} else {
-
-				if (!strictRequire) {
-					possibleFileNames.add(fileName + File.separator + "index.js");
-				}
-				
-				possibleFileNames.add(fileName.concat(".js"));
-			}
-			
-			List<String> possiblePaths = new ArrayList<String>();
-			
-			if (strictRequire) {
-				possiblePaths.add(rootPath);
-			} else {
-				String currentDir = tlCurrentDir.get();
-				
-				if (currentDir != null && !rootPath.equals(currentDir)) {
-					possiblePaths.add(currentDir);	
-				}
-				
-				if (relativeRequire) {
-					possiblePaths.add(rootPath);
-				} else {
-					possiblePaths.add(rootPath + File.separator + LIB_PATH);
-				}
-			}
-
-			String scriptPath = null;
+			String fileNameNormalized = fileName.endsWith(".js") ? fileName : fileName.concat(".js");
+			String scriptPath = rootPath + File.separator + fileNameNormalized;
+			File scriptFile = new File(scriptPath);
 			String scriptContent = null;
-			File scriptFile = null;
-		
-			outer: for (String basePath : possiblePaths) {
-				for (String possibleName : possibleFileNames) {
-					scriptPath = basePath + File.separator + possibleName;
-					scriptFile = new File(scriptPath);
-					
-//						scriptInfo = scriptCache.get(scriptPath);
-//						
-//						if (scriptInfo != null && scriptInfo.getLoadTime() > scriptFile.lastModified()) {
-//							scriptContent = scriptInfo.getContent();
-//						} else if (scriptFile.exists()){
-//							scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
-//							updateScriptCache(scriptFile, scriptContent);
-//						}
-					
-					
-					if (scriptFile.exists()){
-						scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
-						updateScriptCache(fileName, scriptFile, scriptContent);
+			
+			/*Cache control mechanism*/
+			if(scriptCache.containsKey(scriptPath) && scriptCache.get(scriptPath).getLoadTime() >= scriptFile.lastModified()) {
+				scriptContent = scriptCache.get(scriptPath).getContent();
+			} else {
+				scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
+				updateScriptCache(scriptFile, scriptContent);
+			}
+			
+			if(loadToGlobal) {
+				scriptObject = (ScriptObjectMirror) engine.eval(scriptContent, rootContext);
+			} else {
+				
+				Bindings reqScope = new SimpleBindings();
+				reqScope.putAll(engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE));
+				
+				ScriptContext reqContext = new SimpleScriptContext();
+				reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
+				
+				setupContext(reqContext);
+				
+				if(transpileScripts) {
+					//TODO: O código abaixo não executa o index.js, por conta da falta de ; antes do exports
+					if(rootContext.getAttribute("Babel") != null) {
+						scriptContent = "Babel.transform(\"" + scriptContent.replaceAll("\n", " \t\\\\\n").replaceAll("\\\"", "\\\\\"") + "\", {presets:  [ [\"es2015\"] ]} ).code.replace('\"use strict\";', '')";
+						scriptContent = (String) engine.eval(scriptContent, reqContext);
 					}
 					
 					if (scriptContent != null) {
 						break outer;
 					}
 				}
-			}
-			
-			if (scriptContent == null) {
-				throw new IllegalArgumentException("[ERROR] Cannot find " + fileName + " module.");
-			}
-			
-			String oldCurrDir = tlCurrentDir.get();
-			
-			try {
-				//Empilhamos o path atual para que seja considerado em requires futuros.
-				tlCurrentDir.set(scriptFile.getParent());
 				
-				if(loadToGlobal) {
-					scriptObject = (ScriptObjectMirror) engine.eval(scriptContent, rootContext);
-				} else {
-					Bindings reqScope = new SimpleBindings();
-					reqScope.putAll(engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE));
-					
-					ScriptContext reqContext = new SimpleScriptContext();
-					reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
-					
-					setupContext(reqContext);
-					
-					if(transpileScripts) {
-						//TODO: O código abaixo não executa o index.js, por conta da falta de ; antes do exports
-						if(rootContext.getAttribute("Babel") != null) {
-							scriptContent = "Babel.transform(\"" + scriptContent.replaceAll("\n", " \t\\\\\n").replaceAll("\\\"", "\\\\\"") + "\", {presets:  [ [\"es2015\"] ]} ).code.replace('\"use strict\";', '')";
-							scriptContent = (String) engine.eval(scriptContent, reqContext);
-							
-							//TODO: gravar em arquivo o conteúdo transpilado
-							updateScriptCache(fileName, scriptFile, scriptContent);
-						}
-					}
-					
-					if(scriptContent != null) {
-						Object result = engine.eval(scriptContent, reqContext);
-						if(result instanceof ScriptObjectMirror) {
-							scriptObject = (ScriptObjectMirror) result;
-						}
+				if(scriptContent != null) {
+					Object result = engine.eval(scriptContent, reqContext);
+					if(result instanceof ScriptObjectMirror) {
+						scriptObject = (ScriptObjectMirror) result;
 					}
 				}
-			} finally {
-				//Desempilhamos o path atual
-				tlCurrentDir.set(oldCurrDir);
+				
+				//TODO: gravar em arquivo o conteúdo transpilado
+				updateScriptCache(scriptFile, scriptContent);
 			}
 		} catch(IOException e) {
 			System.out.println("[ERROR] Cannot load " + fileName + " module.");
 			e.printStackTrace();
-		} catch(ScriptException se) {
-			System.out.println("[ERROR] Error running module code: " + fileName + ".");
-			se.printStackTrace();
 		}
 		
-		return scriptObject;
+		return scriptContent;
 	}
 	
 	public static void loadJar(String jarName) {
