@@ -14,7 +14,8 @@ public class Main {
 		} else {
 			try {
 				ThrustCore thrustCore = new ThrustCore();
-				thrustCore.loadScript(args[0]);
+				String mainScript = ThrustCore.require(args[0]);
+				thrustCore.eval(mainScript);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

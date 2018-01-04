@@ -1,4 +1,4 @@
-let bitCode = require("src/test/resources/AssignInContext/bitcode")
+let bitCode = require("bin/AssignInContext/bitcode")
 
 Object.assign(this, bitCode)
 

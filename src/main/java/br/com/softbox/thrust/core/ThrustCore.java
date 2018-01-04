@@ -24,7 +24,8 @@ import javax.script.SimpleBindings;
 import javax.script.SimpleScriptContext;
 
 import br.com.softbox.thrust.util.ThrustUtils;
-import jdk.nashorn.api.scripting.*;
+import jdk.nashorn.api.scripting.JSObject;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
 public class ThrustCore {
 	private static ScriptEngine engine;
@@ -84,10 +85,6 @@ public class ThrustCore {
 		requireGlobalBitCodesByConfig();
 	}
 	
-	public void loadScript(String fileName) throws IOException, ScriptException {
-        require(fileName, false);
-    }
-	
 	private void readConfig() throws NoSuchMethodException, ScriptException {
 		config = invokeFunction("getConfig");
 	}
@@ -132,11 +129,14 @@ public class ThrustCore {
 	
 	@SuppressWarnings("restriction")
 	public JSObject eval(String expression) throws ScriptException {
-		Bindings reqScope = new SimpleBindings();
-		reqScope.putAll(engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE));
-		
 		ScriptContext reqContext = new SimpleScriptContext();
-		reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
+        Bindings reqScope = new SimpleBindings();
+
+        reqScope.putAll(rootScope);
+        reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
+        reqScope.put("reqContext", reqContext);
+
+		setupContext(reqContext);
 		
 		JSObject result = null;
 		try {
@@ -169,63 +169,96 @@ public class ThrustCore {
 		return result;
 	}
 	
-	@SuppressWarnings("restriction")
-	public static ScriptObjectMirror require(String fileName, boolean loadToGlobal) {
-		ScriptObjectMirror scriptObject = null;
+//	@SuppressWarnings("restriction")
+//	public static ScriptObjectMirror require(String fileName, boolean loadToGlobal) {
+//		ScriptObjectMirror scriptObject = null;
+//		
+//		loadToGlobal = true;
+//		
+//		try {
+//			String fileNameNormalized = fileName.endsWith(".js") ? fileName : fileName.concat(".js");
+//			String scriptPath = rootPath + File.separator + fileNameNormalized;
+//			File scriptFile = new File(scriptPath);
+//			String scriptContent = null;
+//			
+//			/*Cache control mechanism*/
+//			if(scriptCache.containsKey(scriptPath) && scriptCache.get(scriptPath).getLoadTime() >= scriptFile.lastModified()) {
+//				scriptContent = scriptCache.get(scriptPath).getContent();
+//			} else {
+//				scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
+//				updateScriptCache(scriptFile, scriptContent);
+//			}
+//			
+//			if(loadToGlobal) {
+//				scriptObject = (ScriptObjectMirror) engine.eval(scriptContent, rootContext);
+//			} else {
+//				
+//				Bindings reqScope = new SimpleBindings();
+//				reqScope.putAll(engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE));
+//				
+//				ScriptContext reqContext = new SimpleScriptContext();
+//				reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
+//				
+//				setupContext(reqContext);
+//				
+//				if(transpileScripts) {
+//					//TODO: O código abaixo não executa o index.js, por conta da falta de ; antes do exports
+//					if(rootContext.getAttribute("Babel") != null) {
+//						scriptContent = "Babel.transform(\"" + scriptContent.replaceAll("\n", " \t\\\\\n").replaceAll("\\\"", "\\\\\"") + "\", {presets:  [ [\"es2015\"] ]} ).code.replace('\"use strict\";', '')";
+//						scriptContent = (String) engine.eval(scriptContent, reqContext);
+//					}
+//				}
+//				
+//				if(scriptContent != null) {
+//					Object result = engine.eval(scriptContent, reqContext);
+//					if(result instanceof ScriptObjectMirror) {
+//						scriptObject = (ScriptObjectMirror) result;
+//					}
+//				}
+//				
+//				//TODO: gravar em arquivo o conteúdo transpilado
+//				updateScriptCache(scriptFile, scriptContent);
+//			}
+//		} catch(IOException e) {
+//			System.out.println("[ERROR] Cannot load " + fileName + " module.");
+//			e.printStackTrace();
+//		} catch(ScriptException se) {
+//			System.out.println("[ERROR] Error running module code: " + fileName + ".");
+//			se.printStackTrace();
+//		}
+//		
+//		return scriptObject;
+//	}
+	
+	public static String require(String fileName) throws Exception {
+		String scriptContent = null;
 		
 		try {
 			String fileNameNormalized = fileName.endsWith(".js") ? fileName : fileName.concat(".js");
 			String scriptPath = rootPath + File.separator + fileNameNormalized;
 			File scriptFile = new File(scriptPath);
-			String scriptContent = null;
 			
-			/*Cache control mechanism*/
 			if(scriptCache.containsKey(scriptPath) && scriptCache.get(scriptPath).getLoadTime() >= scriptFile.lastModified()) {
 				scriptContent = scriptCache.get(scriptPath).getContent();
 			} else {
 				scriptContent = new String(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
-				updateScriptCache(scriptFile, scriptContent);
-			}
-			
-			if(loadToGlobal) {
-				scriptObject = (ScriptObjectMirror) engine.eval(scriptContent, rootContext);
-			} else {
-				
-				Bindings reqScope = new SimpleBindings();
-				reqScope.putAll(engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE));
-				
-				ScriptContext reqContext = new SimpleScriptContext();
-				reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
-				
-				setupContext(reqContext);
 				
 				if(transpileScripts) {
 					//TODO: O código abaixo não executa o index.js, por conta da falta de ; antes do exports
 					if(rootContext.getAttribute("Babel") != null) {
 						scriptContent = "Babel.transform(\"" + scriptContent.replaceAll("\n", " \t\\\\\n").replaceAll("\\\"", "\\\\\"") + "\", {presets:  [ [\"es2015\"] ]} ).code.replace('\"use strict\";', '')";
-						scriptContent = (String) engine.eval(scriptContent, reqContext);
+						scriptContent = (String) engine.eval(scriptContent, rootContext);
 					}
 				}
-				
-				if(scriptContent != null) {
-					Object result = engine.eval(scriptContent, reqContext);
-					if(result instanceof ScriptObjectMirror) {
-						scriptObject = (ScriptObjectMirror) result;
-					}
-				}
-				
-				//TODO: gravar em arquivo o conteúdo transpilado
+
 				updateScriptCache(scriptFile, scriptContent);
 			}
 		} catch(IOException e) {
 			System.out.println("[ERROR] Cannot load " + fileName + " module.");
 			e.printStackTrace();
-		} catch(ScriptException se) {
-			System.out.println("[ERROR] Error running module code: " + fileName + ".");
-			se.printStackTrace();
 		}
 		
-		return scriptObject;
+		return scriptContent;
 	}
 	
 	private static void updateScriptCache(File scriptFile, String scriptContent) {
