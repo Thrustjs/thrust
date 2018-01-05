@@ -20,7 +20,7 @@ public class CLIInit implements Runnable {
 	@Override
 	public void run() {
 		if (path == null) {
-			path = new File(".");
+			path = new File("");
 		}
 		
 		System.out.println("Executing init on " + path.getAbsolutePath());

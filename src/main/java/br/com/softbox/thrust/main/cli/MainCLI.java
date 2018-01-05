@@ -35,9 +35,7 @@ public class MainCLI implements Runnable {
 		}
 		
 		try {
-			ThrustCore thrustCore = new ThrustCore();
-			String mainScript = ThrustCore.require(path.getPath(), true);
-			thrustCore.eval(mainScript);
+			new ThrustCore(path.getPath());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
