@@ -1,40 +1,40 @@
 package br.com.softbox.thrust.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.stream.Collectors;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-//novo: CRIAR O ESQUEMA DE CACHE NO REQUIRE COM BABEL
-
 public class ThrustUtils {
-	private static String polyfills = "var exports = {}; if (!Object.assign) {     Object.defineProperty(Object, 'assign', {         enumerable: false,         configurable: true,         writable: true,         value: function (target) {             'use strict';             if (target === undefined || target === null) {                 throw new TypeError('Cannot convert first argument to object');             }              var to = Object(target);             for (var i = 1; i < arguments.length; i++) {                 var nextSource = arguments[i];                 if (nextSource === undefined || nextSource === null) {                     continue;                 }                 nextSource = Object(nextSource);                  var keysArray = Object.keys(Object(nextSource));                 for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {                     var nextKey = keysArray[nextIndex];                     var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);                     if (desc !== undefined && desc.enumerable) {                         to[nextKey] = nextSource[nextKey];                     }                 }             }             return to;         }     }); }   if (!Object.values) {     Object.values = function values(target) {         return Object.getOwnPropertyNames(target).map(function (k) {             return target[k]         })     } }   if (!Array.prototype.find) {     Object.defineProperty(Array.prototype, 'find', {         value: function (predicate) {             if (this == null) {                 throw new TypeError('\"this\" is null or not defined');             }              var o = Object(this);             var len = o.length >>> 0;              if (typeof predicate !== 'function') {                 throw new TypeError('predicate must be a function');             }              var thisArg = arguments[1];             var k = 0;              while (k < len) {                 var kValue = o[k];                 if (predicate.call(thisArg, kValue, k, o)) {                     return kValue;                 }                 k++;             }              return undefined;         }     }); } ";
-	private static String requireWrapper = "function require(fileName) {  const ThrustCore = Java.type(\"br.com.softbox.thrust.core.ThrustCore\");  const map = ThrustCore.require(fileName, false);  const attrs = {};  for (var key in map) {    if(key !== \"module\") {      attrs[key] = map[key];    } else {      for(var exportsKey in map[key].exports) {        attrs[exportsKey] = map[key[exportsKey]];      }    }  }  return attrs;} ";
-	private static String configStr = null;
-
-	public static void loadPolyfills(ScriptEngine engine, ScriptContext context) throws ScriptException {
-		loadOnContext(engine, context, polyfills);
+	private static String polyfillsContent = null;
+	private static String platformContent = null;
+	
+	static {
+		platformContent = loadResource("/platform.js");
+		polyfillsContent = loadResource("/polyfills.js");
 	}
 
-	public static void loadRequireWrapper(ScriptEngine engine, ScriptContext context) throws ScriptException {
-		loadOnContext(engine, context, requireWrapper);
-	}
-
-	public static void loadGetConfigFunction(String rootPath, ScriptEngine engine, ScriptContext context)
-			throws ScriptException, IOException {
-		if (configStr == null) {
-			File configJson = new File(rootPath + File.separator + "config.json");
-			if (!configJson.exists()) {
-				loadOnContext(engine, context, "function getConfig(){return {}}");
-				return;
-			}
-			configStr = new String(Files.readAllBytes(configJson.toPath()), StandardCharsets.UTF_8);
+	private static String loadResource(String resourceName) {
+		try {
+			InputStream in = ThrustUtils.class.getResourceAsStream(resourceName); 
+			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+			return reader.lines().collect(Collectors.joining("\n"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new IllegalStateException("[ERROR] failed to load resource file: " + resourceName, e);
 		}
-		loadOnContext(engine, context, "function getConfig(){return " + configStr + "}");
+	}
+	
+	public static void loadPolyfills(ScriptEngine engine, ScriptContext context) throws ScriptException {
+		loadOnContext(engine, context, polyfillsContent);
+	}
+
+	public static void loadPlatform(ScriptEngine engine, ScriptContext context) throws ScriptException {
+		loadOnContext(engine, context, platformContent);
 	}
 
 	public static void loadOnContext(ScriptEngine engine, ScriptContext scriptContext, String scriptContent)
@@ -46,7 +46,7 @@ public class ThrustUtils {
 		if (scriptContent == null || scriptContent.length() < 1) {
 			throw new IllegalStateException("[ERROR] \"scriptContent\" param must be not null or empty.");
 		}
-
+		
 		engine.eval(scriptContent, scriptContext);
 	}
 }
