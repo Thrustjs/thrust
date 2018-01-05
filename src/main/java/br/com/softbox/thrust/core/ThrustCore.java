@@ -47,7 +47,8 @@ public class ThrustCore {
 
 	protected void initialize(String rootPath) throws ScriptException, IOException, NoSuchMethodException {
 		System.setProperty("nashorn.args", "--language=es6");
-
+		System.setProperty("java.security.egd", "file:/dev/urandom");
+		
 		if (rootPath == null) {
 			rootPath = new File("").getAbsolutePath();
 		} else {
