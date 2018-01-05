@@ -9,6 +9,7 @@ public abstract class BaseTest {
 	
 	static {
 		System.setOut(new PrintStream(outContent));
+		System.setErr(new PrintStream(errContent));
 	}
 	
 	@BeforeAll
