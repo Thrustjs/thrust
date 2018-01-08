@@ -12,13 +12,16 @@ import javax.script.ScriptException;
 public class ThrustUtils {
 	private static String polyfillsContent = null;
 	private static String platformContent = null;
+	private static String cliContent = null;
+	
 	
 	static {
 		platformContent = loadResource("/platform.js");
 		polyfillsContent = loadResource("/polyfills.js");
+		cliContent = loadResource("/cli/cli.js");
 	}
 
-	private static String loadResource(String resourceName) {
+	public static String loadResource(String resourceName) {
 		try {
 			InputStream in = ThrustUtils.class.getResourceAsStream(resourceName); 
 			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -35,6 +38,10 @@ public class ThrustUtils {
 
 	public static void loadPlatform(ScriptEngine engine, ScriptContext context) throws ScriptException {
 		loadOnContext(engine, context, platformContent);
+	}
+	
+	public static void loadCLI(ScriptEngine engine, ScriptContext context) throws ScriptException {
+		loadOnContext(engine, context, cliContent);
 	}
 
 	public static void loadOnContext(ScriptEngine engine, ScriptContext scriptContext, String scriptContent)

@@ -17,7 +17,6 @@ repositories {
 
 dependencies {
 	//compile files('lib/thrust-core.jar')
-	compile 'info.picocli:picocli:2.2.1'
 	
 	testCompileOnly(
 		'org.apiguardian:apiguardian-api:1.0.0'
