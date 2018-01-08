@@ -4,6 +4,6 @@ getConfig = function() {
 
 let config = getConfig()
 
-print(JSON.stringify(config))
+console.log(JSON.stringify(config))
 config.name = 'bitcode.js'
-print(JSON.stringify(config))
+console.log(JSON.stringify(config))
