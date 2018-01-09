@@ -66,3 +66,6 @@ jsfiles
 todo.txt
 .vscode
 dist/seed
+/.metadata/
+.classpath
+dist/
