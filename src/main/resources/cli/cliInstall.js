@@ -8,7 +8,7 @@ var FilenameFilter = Java.type("java.io.FilenameFilter")
 var FileUtils = Java.type("org.apache.commons.io.FileUtils")
 
 var DEF_BITCODES_OWNER = "thrust-bitcodes"
-var DEF_LIB_PATH = "lib";
+var DEF_LIB_PATH = "lib"
 
 var BITCODE_LOCAL_REPO = Paths.get(java.lang.System.getProperty("user.home"), ".thrust-cache", "bitcodes").toString()
 
@@ -16,7 +16,7 @@ function runInstall(runInfo) {
 	var installDir
 	
 	if (runInfo.args.basePath) {
-		installDir = new File(runInfo.args.basePath);
+		installDir = new File(runInfo.args.basePath)
 	} else {
 		installDir = new File(".").getAbsolutePath()
 	}
@@ -24,28 +24,39 @@ function runInstall(runInfo) {
 	var briefJsonFile = new File(installDir, "brief.json")
 
 	if (!briefJsonFile.exists()) {
-		print("This isn't a thrust app, 'brief.json' not found.")
-		return
+		throw new Error("This isn't a thrust app, 'brief.json' not found.")
 	}
+	
+	var briefJson = JSON.parse(FileUtils.readFileToString(briefJsonFile))
 	
 	var client = require("/util/github_client")
 
 	var bitcode = runInfo.args.bitcode
-	var bitcodesToInstall;
+	var bitcodesToInstall
 	
 	if (bitcode) { //Install only this bitcode
-		bitcodesToInstall = [bitcode];
+		bitcodesToInstall = [bitcode]
 	} else { //Install all bitcodes based on brief.json
-		var briefJson = JSON.parse(FileUtils.readFileToString(briefJsonFile));
-		bitcodesToInstall = briefJson.dependencies;
+		bitcodesToInstall = briefJson.dependencies
 	}
 	
 	if (!bitcodesToInstall || bitcodesToInstall.length == 0) {
-		print('No dependencies was found to install.')
-		return;
+		throw new Error('No dependencies was found to install.')
 	}
 	
-	installBitcodes(installDir, client, bitcodesToInstall);
+	installBitcodes(installDir, client, bitcodesToInstall)
+	
+	if (bitcode) {
+		if (!briefJson.dependencies) {
+			briefJson.dependencies = []
+		}
+		
+		if (briefJson.dependencies.indexOf(bitcode) < 0) {
+			briefJson.dependencies.push(bitcode)
+
+			FileUtils.write(briefJsonFile, JSON.stringify(briefJson, null, 2));
+		}
+	}
 }
 
 function installBitcodes(installDir, client, bitcodesToInstall) {
@@ -59,17 +70,11 @@ function installBitcodes(installDir, client, bitcodesToInstall) {
 			repository = t[1]
 
 			if (!owner) {
-				print("Invalid owner on bitcode: " + bitcode)
-				print("Must be 'owner/bitcode' or just 'bitcode' in case of a default repository.")
-				return
-
+				throw new Error("Invalid owner on bitcode: " + bitcode + "\nMust be 'owner/bitcode' or just 'bitcode' in case of a default repository.")
 			}
 
 			if (!repository) {
-				print("Invalid repository on bitcode: " + bitcode)
-				print("Must be 'owner/bitcode' or just 'bitcode' in case of a default repository.")
-				return
-
+				throw new Error("Invalid repository on bitcode: " + bitcode + "\nMust be 'owner/bitcode' or just 'bitcode' in case of a default repository.")
 			}
 		} else {
 			repository = bitcode
@@ -81,13 +86,12 @@ function installBitcodes(installDir, client, bitcodesToInstall) {
 		
 		var bitCodeIdentifier = owner + "/" + repository;
 
-		print("Installing bitcode: " + bitCodeIdentifier + "...")
+		log("Installing bitcode: " + bitCodeIdentifier + "...")
 
 		var libBriefJson = client.getBriefJson(owner, repository)
 
 		if (!libBriefJson) {
-			print("Invalid bitcode, 'brief.json' was not found on " + bitCodeIdentifier)
-			return
+			throw new Error("Invalid bitcode, 'brief.json' was not found on " + bitCodeIdentifier)
 		}
 		
 		var libDir = Paths.get(installDir, DEF_LIB_PATH, owner, repository).toFile()
@@ -95,10 +99,12 @@ function installBitcodes(installDir, client, bitcodesToInstall) {
 		var cachedBitcode = findInLocalCache(owner, repository, libBriefJson.version)
 		
 		if (cachedBitcode) {
-			print("Found " + bitCodeIdentifier + "@" + cachedBitcode.version  + " on cache.")
+			log("Found version " + cachedBitcode.version  + " on cache...")
 
 			FileUtils.copyDirectory(cachedBitcode.file, libDir)
 		} else {
+			log("Not found on cache, downloading...")
+			
 			if (!libDir.exists()) {
 				libDir.mkdirs()
 			}
@@ -114,14 +120,13 @@ function installBitcodes(installDir, client, bitcodesToInstall) {
 			FileUtils.copyDirectory(libDir, Paths.get(BITCODE_LOCAL_REPO, owner, repository, libBriefJson.version).toFile())
 		}
 		
+		print("DONE")
+		
 		var dependencies = libBriefJson.dependencies
 	    
 	    if (dependencies && dependencies.length > 0) {
-	    	print("Installing dependencies of " + bitCodeIdentifier)
 	    	installBitcodes(installDir, client, dependencies)
 	    }
-		
-		print("Bitcode " + bitCodeIdentifier + " installed.")
 	});
 }
 

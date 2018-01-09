@@ -25,8 +25,8 @@ function runInit(runInfo) {
 	var fileCount = Files.list(Paths.get(installDir)).count()
 	
 	if (fileCount > 0) {
-		//print('[ERROR] It seems that you already have files on ' + installDir + '. Please, delete them.')
-		//return;
+		print('[ERROR] It seems that you already have files on \'' + installDir + '\'. We need a new/clean directory.')
+		return
 	}
     
     var owner
@@ -40,15 +40,11 @@ function runInit(runInfo) {
     	repository = t[1]
     	
     	if (!owner) {
-    		print("Invalid owner on template: " + template)
-    		print("Must be 'owner/template' or just 'template' in case of a default seed.")
-    		return
+    		throw new Error("Invalid owner on template: " + template + "\nMust be 'owner/template' or just 'template' in case of a default seed.")
     	}
     	
     	if (!repository) {
-    		print("Invalid repository on template: " + repository)
-    		print("Must be 'owner/template' or just 'template' in case of a default seed.")
-    		return
+    		throw new Error("Invalid repository on template: " + template + "\nMust be 'owner/template' or just 'template' in case of a default seed.")
     	}
     } else {
     	repository = template
@@ -65,8 +61,7 @@ function runInit(runInfo) {
     var briefJson = client.getBriefJson(owner, repository)
     
     if (!briefJson) {
-    	print("Invalid thrust-seed, 'brief.json' was not found on " + owner + "/" + repository)
-    	return
+    	throw new Error("Invalid thrust-seed, 'brief.json' was not found on " + owner + "/" + repository)
     }
     
     var zipFileName = "thrustinit.zip"
@@ -107,7 +102,7 @@ function runInit(runInfo) {
     	})
     }
     
-    print("Thrust app created")
+    print("Your Thrust app is ready to use.")
 }
 
 exports = {

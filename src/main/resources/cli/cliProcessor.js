@@ -77,7 +77,11 @@ function processCommand(args, cliCommands) {
   }
   
   if (possibleCmd && argsMD) {
-	  require(possibleCmd.runner).run(argsMD);
+	  try {
+		  require(possibleCmd.runner).run(argsMD);
+	  } catch(e) {
+		  print(e.message);
+	  }
   }
 }
 

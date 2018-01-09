@@ -52,6 +52,10 @@ function require(fileName) {
 	})();
 }
 
+function log(str) {
+	java.lang.System.out.print(str);
+}
+
 function runCLI(args) {
 	if (typeof args == "string") {
 		args = args.split(',');

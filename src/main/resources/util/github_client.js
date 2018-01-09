@@ -35,8 +35,6 @@ function downloadFiles(owner, repository, path, destFile) {
 		}
 		
 		result.forEach(function(file) {
-			print('> Downloading... ' + file.name)
-			
 			if (file.type == 'dir') {
 				downloadFiles(owner, repository, path + File.separator + file.name, new File(destFile, file.name))
 			} else {
