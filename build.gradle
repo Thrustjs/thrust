@@ -50,7 +50,6 @@ jar {
 ospackage {
     version = '0.1.0'
     release = '1'
-    arch = NOARCH
     os = LINUX
     user = 'root'
 
