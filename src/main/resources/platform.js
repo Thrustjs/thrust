@@ -33,26 +33,19 @@ function init() {
 	}
 }
 
-function require(fileName, strictRequire) {
+function require(fileName, strictRequire){
 	return (function() {
-		var exports = {};
-		var attrs = {};
-
-		var scriptContent = getScriptContent(fileName, strictRequire);
-		var map = eval(scriptContent);
-		
-		for (var key in map) {
-			if(key !== "module") {
-				attrs[key] = map[key];
-			} else {
-				for(var exportsKey in map[key].exports) {
-					attrs[exportsKey] = map[key[exportsKey]];
-				}
-			} 
+		var module = { 
+			exports: {} 
 		}
-
-		return attrs;
-	})();
+		var exports = {}
+	    var scriptContent = getScriptContent(fileName, strictRequire)
+	    eval(scriptContent)
+	    for (var att in module.exports) { 
+	    		exports[att] = module.exports[att] 
+    		}
+	    return exports
+	})()
 }
 
 function getScriptContent(fileName, strictRequire) {
