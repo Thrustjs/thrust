@@ -4,11 +4,13 @@ buildscript {
     }
     dependencies {
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.1'
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:4.4.0'
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'org.junit.platform.gradle.plugin'
+apply plugin: 'nebula.ospackage'
 
 repositories {
     jcenter()
@@ -44,3 +46,26 @@ jar {
     configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
   }
 }
+
+ospackage {
+    version = '0.1.0'
+    release = '1'
+    arch = NOARCH
+    os = LINUX
+    user = 'root'
+
+    postInstall file('src/main/resources/scripts/postInstall.sh')
+
+    into '/opt/thrust'
+
+    from(jar.outputs.files) {
+        into 'lib'
+    }
+    from('src/main/resources/scripts') {
+    	into 'bin'
+        fileMode = 0755
+    }
+
+    link('/usr/local/bin/thrust', '/opt/thrust/bin/thrust.sh')
+}
+
