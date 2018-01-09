@@ -21,7 +21,6 @@ var CLI_COMMANDS = [ {
 	name : [ 'install' ],
 	args : [ {
 		name : 'bitcode',
-		required : true,
 		description : 'Name of the bitcode to be installed.'
 	} ],
 	runner : '/cli/cliInstall'

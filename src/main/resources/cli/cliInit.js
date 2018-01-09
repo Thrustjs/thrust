@@ -1,4 +1,6 @@
 var File = Java.type("java.io.File")
+var Files = Java.type("java.nio.file.Files")
+var Paths = Java.type("java.nio.file.Paths")
 var URL = Java.type("java.net.URL")
 var Channels = Java.type("java.nio.channels.Channels")
 var FileOutputStream = Java.type("java.io.FileOutputStream")
@@ -7,7 +9,7 @@ var FilenameFilter = Java.type("java.io.FilenameFilter")
 var FileUtils = Java.type("org.apache.commons.io.FileUtils")
 
 var DEF_SEED_OWNER = "thrust-seeds"
-
+	
 function runInit(runInfo) {
 	var installDir = runInfo.args.path
 
@@ -19,6 +21,13 @@ function runInit(runInfo) {
     } else {
     	installDir = new File(".").getAbsolutePath()
     }
+	
+	var fileCount = Files.list(Paths.get(installDir)).count()
+	
+	if (fileCount > 0) {
+		//print('[ERROR] It seems that you already have files on ' + installDir + '. Please, delete them.')
+		//return;
+	}
     
     var owner
     var repository
@@ -91,17 +100,12 @@ function runInit(runInfo) {
     if (dependencies && dependencies.length > 0) {
     	var installer = require('/cli/cliInstall')
     	
-    	dependencies.forEach(function(dep) {
-    		installer.run({
-        		args: {
-        			bitcode: dep,
-        			basePath: installDir
-        		}
-        	})
+		installer.run({
+    		args: {
+    			basePath: installDir
+    		}
     	})
     }
-    
-    FileUtils.deleteQuietly(new File(installDir + File.separator + "brief.json"))
     
     print("Thrust app created")
 }
