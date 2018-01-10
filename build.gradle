@@ -68,3 +68,14 @@ ospackage {
     link('/usr/local/bin/thrust', '/opt/thrust/bin/thrust.sh')
 }
 
+
+task buildZip(type: Zip, dependsOn: 'jar') {
+    baseName = 'thrust-0.1.0'
+    from (tasks.jar.archivePath) {
+        into 'lib'
+    }
+    from ('src/main/resources/scripts/') {
+        include '*.bat'
+        into 'bin'
+    }
+}
