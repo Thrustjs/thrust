@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import javax.script.Bindings;
@@ -34,21 +35,34 @@ public class ThrustCore {
 	public ThrustCore() throws ScriptException, IOException, NoSuchMethodException {
 		initialize(null);
 	}
-	
+
 	public ThrustCore(String mainFilePath) throws IOException, NoSuchMethodException, ScriptException {
 		File mainFile = new File(mainFilePath);
-		
+
 		rootPath = mainFile.getParent();
-		
+
 		initialize(rootPath);
-		
+
 		loadScript(mainFilePath);
+	}
+
+	public static void runCLI(String[] args) throws ScriptException, NoSuchMethodException {
+		ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+		ScriptContext rootContext = engine.getContext();
+		Bindings rootScope = rootContext.getBindings(ScriptContext.ENGINE_SCOPE);
+
+		setupContext(engine, rootContext);
+
+		ThrustUtils.loadCLI(engine, rootContext);
+
+		ThrustCore.invokeFunction(engine, rootScope, "runCLI",
+				Arrays.asList(args).stream().collect(Collectors.joining(",")));
 	}
 
 	protected void initialize(String rootPath) throws ScriptException, IOException, NoSuchMethodException {
 		System.setProperty("nashorn.args", "--language=es6");
 		System.setProperty("java.security.egd", "file:/dev/urandom");
-		
+
 		if (rootPath == null) {
 			rootPath = new File("").getAbsolutePath();
 		} else {
@@ -56,12 +70,12 @@ public class ThrustCore {
 		}
 
 		this.rootPath = rootPath;
-		
+
 		engine = new ScriptEngineManager().getEngineByName("nashorn");
 		rootContext = engine.getContext();
 		rootScope = rootContext.getBindings(ScriptContext.ENGINE_SCOPE);
-		
-		setupContext(rootContext);
+
+		setupContext(engine, rootContext);
 
 		rootScope.put("rootPath", rootPath);
 
@@ -69,26 +83,26 @@ public class ThrustCore {
 	}
 
 	public JSObject loadScript(String fileName) throws ScriptException, NoSuchMethodException, IOException {
-		
+
 		InputStream in = new FileInputStream(new File(fileName));
-		
+
 		String scriptContent = null;
-		
+
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
 			scriptContent = reader.lines().collect(Collectors.joining("\n"));
 		}
-		
+
 		ScriptContext reqContext = new SimpleScriptContext();
 		Bindings reqScope = new SimpleBindings();
-		
+
 		reqScope.putAll(rootScope);
 		reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
 		reqScope.put("reqContext", reqContext);
 
-		setupContext(reqContext);
+		setupContext(engine, reqContext);
 
 		JSObject result = null;
-		
+
 		try {
 			result = (JSObject) engine.eval(scriptContent, reqContext);
 		} catch (ClassCastException ignored) {
@@ -105,7 +119,7 @@ public class ThrustCore {
 		reqContext.setBindings(reqScope, ScriptContext.ENGINE_SCOPE);
 		reqScope.put("reqContext", reqContext);
 
-		setupContext(reqContext);
+		setupContext(engine, reqContext);
 
 		JSObject result = null;
 		try {
@@ -117,6 +131,11 @@ public class ThrustCore {
 	}
 
 	public JSObject invokeFunction(String function, Object... params) throws NoSuchMethodException, ScriptException {
+		return invokeFunction(engine, rootScope, function, params);
+	}
+
+	public static JSObject invokeFunction(ScriptEngine engine, Bindings scope, String function, Object... params)
+			throws NoSuchMethodException, ScriptException {
 		Invocable inv = (Invocable) engine;
 		String[] fullPath = function.split("\\.");
 
@@ -124,7 +143,7 @@ public class ThrustCore {
 			return (JSObject) inv.invokeFunction(function, params);
 		}
 
-		ScriptObjectMirror scriptObjectMirror = (ScriptObjectMirror) rootScope.get(fullPath[0]);
+		ScriptObjectMirror scriptObjectMirror = (ScriptObjectMirror) scope.get(fullPath[0]);
 		int i = 1;
 		for (; i < (fullPath.length - 1); i++) {
 			scriptObjectMirror = (ScriptObjectMirror) scriptObjectMirror.get(fullPath[i]);
@@ -150,7 +169,7 @@ public class ThrustCore {
 		}
 	}
 
-	public void setupContext(ScriptContext context) throws ScriptException {
+	public static void setupContext(ScriptEngine engine, ScriptContext context) throws ScriptException {
 		ThrustUtils.loadPolyfills(engine, context);
 	}
 }

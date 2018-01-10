@@ -137,6 +137,8 @@ function loadJar(jarName) {
 
 			method.setAccessible(true);
 		    method.invoke(ClassLoader.getSystemClassLoader(), [jarFile.toURI().toURL()]);
+		} else {
+			throw new Error();
 		}
 	} catch (e) {
 		throw new Error("[ERROR] Cannot load .jar: " + jarName);
