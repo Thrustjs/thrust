@@ -16,4 +16,4 @@ if ! eval "$JAVA" -version 2>&1 >/dev/null | grep -q "java version \"1.8" ; then
 fi
 
 # Running app
-eval "$JAVA" -jar /opt/thrust/lib/thrust.jar $1
+eval "$JAVA" -jar /opt/thrust/lib/thrust.jar $*

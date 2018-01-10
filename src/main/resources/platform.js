@@ -33,26 +33,15 @@ function init() {
 	}
 }
 
-function require(fileName, strictRequire) {
+function require(fileName, strictRequire){
 	return (function() {
-		var exports = {};
-		var attrs = {};
-
-		var scriptContent = getScriptContent(fileName, strictRequire);
-		var map = eval(scriptContent);
-		
-		for (var key in map) {
-			if(key !== "module") {
-				attrs[key] = map[key];
-			} else {
-				for(var exportsKey in map[key].exports) {
-					attrs[exportsKey] = map[key[exportsKey]];
-				}
-			} 
+		var exports = {}
+		var module = { 
+			exports: exports
 		}
-
-		return attrs;
-	})();
+	    eval(getScriptContent(fileName, strictRequire))
+	    return exports
+	})()
 }
 
 function getScriptContent(fileName, strictRequire) {
@@ -144,6 +133,8 @@ function loadJar(jarName) {
 
 			method.setAccessible(true);
 		    method.invoke(ClassLoader.getSystemClassLoader(), [jarFile.toURI().toURL()]);
+		} else {
+			throw new Error();
 		}
 	} catch (e) {
 		throw new Error("[ERROR] Cannot load .jar: " + jarName);
