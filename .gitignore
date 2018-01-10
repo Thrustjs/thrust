@@ -11,5 +11,5 @@ dist/seed
 .classpath
 dist/
 .idea/
-*.iml
+/*.iml
 /out
