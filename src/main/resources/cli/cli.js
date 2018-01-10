@@ -5,6 +5,11 @@ var InputStreamReader = Java.type("java.io.InputStreamReader");
 var Collectors = Java.type("java.util.stream.Collectors");
 
 var CLI_COMMANDS = [ {
+	name : [ 'help' ],
+	args: [],
+	options: [],
+	runner : cliHelp
+}, {
 	name : [ 'init' ],
 	args : [ {
 		name : 'path',
@@ -62,4 +67,34 @@ function runCLI(args) {
 	}
 	
 	require('/cli/cliProcessor').process(args, CLI_COMMANDS);
+}
+
+function cliHelp(runInfo) {
+	print('Thrust help')
+	print()
+	
+	print('Available commands:')
+	print()
+	
+	CLI_COMMANDS.forEach(function(cliCmd) {
+		print('Name: ' + cliCmd.name.join(', '))
+		
+		if (cliCmd.args.length > 0) {
+			print('Arguments: ')
+			print(cliCmd.args.map(function(arg) {
+				return arg.name + ' - ' + arg.description
+			}).join('\n'))
+		}
+		
+		if (cliCmd.options && cliCmd.options.length > 0) {
+			print('Options: ')
+			print(cliCmd.options.map(function(opt) {
+				return opt.name.map(function(name) {
+					return '-'.concat(name)
+				}).join(', ') + '    ' + opt.description
+			}).join('\n'))
+		}
+		
+		print()
+	})
 }

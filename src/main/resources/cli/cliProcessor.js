@@ -78,7 +78,15 @@ function processCommand(args, cliCommands) {
   
   if (possibleCmd && argsMD) {
 	  try {
-		  require(possibleCmd.runner).run(argsMD);
+		  var run
+		  
+		  if (typeof possibleCmd.runner == "string") {
+			  run = require(possibleCmd.runner).run
+		  } else {
+			  run = possibleCmd.runner
+		  }
+		  
+		  run(argsMD);
 	  } catch(e) {
 		  print(e.message);
 	  }
