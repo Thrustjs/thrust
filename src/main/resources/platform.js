@@ -80,32 +80,34 @@ function getScriptContent(fileName, strictRequire) {
 			}
 		}
 		
-		outer: for each(var basePath in possiblePaths) {
-			for each(var possibleName in possibleFileNames) {
-				var scriptPath = basePath + File.separator + possibleName;
-				var scriptFile = new File(scriptPath);
+		possiblePaths.every(function(basePath){
+			return possibleFileNames.every(function(possibleName) {
+				var scriptPath = basePath + File.separator + possibleName
+				var scriptFile = new File(scriptPath)
 				
-				var scriptInfo = _scriptCache[scriptFile.getAbsolutePath()];
+				var scriptInfo = _scriptCache[scriptFile.getAbsolutePath()]
 				
 				if (scriptInfo && scriptInfo.loadTime > scriptFile.lastModified()) {
-					scriptContent = scriptInfo.scriptContent;
+					scriptContent = scriptInfo.scriptContent
 				} else if (scriptFile.exists()){
-					scriptContent = new JString(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8);
+					scriptContent = new JString(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8)
 					
 					if (getConfig().transpileScripts) {
 						//TODO: O código abaixo não executa o index.js, por conta da falta de ; antes do exports
 						//scriptContent = "Babel.transform(\"" + scriptContent.replaceAll("\n", " \t\\\\\n").replaceAll("\\\"", "\\\\\"") + "\", {presets:  [ [\"es2015\"] ]} ).code.replace('\"use strict\";', '')";
 					}
 					
-					updateScriptCache(scriptFile, scriptContent);
+					updateScriptCache(scriptFile, scriptContent)
 				}
 			
 				if (scriptContent != null) {
-					_currentRequireDir.set(scriptFile.getParent());
-					break outer;
+					_currentRequireDir.set(scriptFile.getParent())
+					return false
 				}
-			}
-		}
+				
+				return true
+			})
+		})
 		
 		if (!scriptContent) {
 			throw new Error("[ERROR] Cannot find " + fileName + " module.")
