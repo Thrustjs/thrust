@@ -35,15 +35,11 @@ function init() {
 
 function require(fileName, strictRequire){
 	return (function() {
-		var module = { 
-			exports: {} 
-		}
 		var exports = {}
-	    var scriptContent = getScriptContent(fileName, strictRequire)
-	    eval(scriptContent)
-	    for (var att in module.exports) { 
-	    		exports[att] = module.exports[att] 
-    		}
+		var module = { 
+			exports: exports
+		}
+	    eval(getScriptContent(fileName, strictRequire))
 	    return exports
 	})()
 }
