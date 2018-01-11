@@ -124,10 +124,16 @@ function getScriptContent(fileName, strictRequire) {
 }
 
 function loadJar(jarName) {
-	var searchPath = _currentRequireDir.get();
+	var searchPath
 	
-	if (searchPath == null) {
-		searchPath = rootPath;
+	if (jarName.startsWith("./") || jarName.startsWith("../")) {
+		searchPath = _currentRequireDir.get();
+		
+		if (searchPath == null) {
+			searchPath = rootPath;
+		}
+	} else {
+		searchPath = rootPath + File.separator + LIB_PATH + File.separator + "jars"
 	}
 	
 	try {
@@ -142,7 +148,7 @@ function loadJar(jarName) {
 			throw new Error();
 		}
 	} catch (e) {
-		throw new Error("[ERROR] Cannot load .jar: " + jarName);
+		throw new Error("[ERROR] Cannot load jar: " + jarName);
 	}
 }
 
@@ -189,11 +195,13 @@ function requireGlobalBitCodesByConfig() {
 }
 
 function loadRuntimeJars() {
-	var jarLibDir = Paths.get(LIB_PATH, "jars").toFile()
+	var jarLibDir = Paths.get(rootPath, LIB_PATH, "jars").toFile()
 	
 	if (jarLibDir.exists()) {
 		Java.from(jarLibDir.listFiles()).forEach(function(libFile) {
-			loadJar(libFile.getPath())
+			if (libFile.isFile()) {
+				loadJar(libFile.getName())
+			}
 		})
 	}
 }
