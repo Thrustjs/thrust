@@ -24,6 +24,10 @@ var CLI_COMMANDS = [ {
 		name : [ 'template', 't' ],
 		description : 'Template to be used on init',
 		def : 'web-complete'
+	}, {
+		name : [ 'force', 'f' ],
+		description : 'Force init on directory, deleting all files before',
+		def : false
 	} ],
 	runner : '/cli/cliInit'
 }, {

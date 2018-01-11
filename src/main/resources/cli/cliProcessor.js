@@ -8,15 +8,23 @@ function processCommand(args, cliCommands) {
   var optionName;
   
   args.forEach(function(arg) {
-      if (arg.startsWith('-')) {
-        optionName = arg.substring(1);
+      if (arg.indexOf('-') == 0) {
+    	if (optionName) {
+    	  argsMD.options[optionName] = true
+    	}
+    	
+    	optionName = arg.substring(1);
       } else if (optionName) {
-        argsMD.options[optionName] = arg;
-        optionName = undefined;
+    	argsMD.options[optionName] = arg;
+    	optionName = undefined;
       } else {
         argsMD.args.push(arg);
       }
   });
+  
+  if (optionName) {
+	  argsMD.options[optionName] = true
+  }
   
   var nArgs = argsMD.args.length;
   var foundByName = false;

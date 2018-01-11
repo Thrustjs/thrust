@@ -19,16 +19,22 @@ function runInit(runInfo) {
              directory.mkdir()
          }
     } else {
-    	installDir = new File(".").getAbsolutePath()
+    	installDir = new File("").getAbsolutePath()
     }
 	
-	var fileCount = Files.list(Paths.get(installDir)).count()
+	var installDirFile = new File(installDir)
+	
+	var fileCount = Files.list(installDirFile.toPath()).count()
 	
 	if (fileCount > 0) {
-		print('[ERROR] It seems that you already have files on \'' + installDir + '\'. We need a new/clean directory.')
-		return
+		if (runInfo.options.force) {
+			FileUtils.cleanDirectory(installDirFile);
+		} else {
+			print('[ERROR] It seems that you already have files on \'' + installDir + '\'. We need a new/clean directory.')
+			return
+		}
 	}
-    
+	
     var owner
     var repository
     
@@ -72,8 +78,7 @@ function runInit(runInfo) {
     var Utils = require("/util/util")
     Utils.unzip(zipFile.getPath(), installDir)
 
-    var file = new File(installDir)
-    var directories = file.list(new FilenameFilter() {
+    var directories = installDirFile.list(new FilenameFilter() {
         accept: function (current, name) {
 	        var file = new File(current, name)
 	        return file.isDirectory() && file.getAbsolutePath().indexOf(repository) > -1
@@ -84,15 +89,21 @@ function runInit(runInfo) {
 
     FileUtils.deleteDirectory(new File(installDir + File.separator + directories[0]))
     FileUtils.deleteDirectory(new File(installDir + File.separator + "git-hooks"))
+    FileUtils.deleteQuietly(new File(installDir + File.separator + "brief.json"))
     FileUtils.deleteQuietly(new File(installDir + File.separator + ".gitignore"))
     FileUtils.deleteQuietly(new File(installDir + File.separator + "README.md"))
     FileUtils.deleteQuietly(new File(installDir + File.separator + "LICENSE"))
     
     FileUtils.deleteQuietly(zipFile)
     
-    var dependencies = briefJson.dependencies
+    var projectBrief = Object.create(null)
+    projectBrief.name = "thrust-app"
+    projectBrief.version =  "1.0"
+	projectBrief.dependencies = briefJson.dependencies
     
-    if (dependencies && dependencies.length > 0) {
+    FileUtils.write(new File(installDir, "brief.json"), JSON.stringify(projectBrief, null, 2));
+    
+    if (projectBrief.dependencies) {
     	var installer = require('/cli/cliInstall')
     	
 		installer.run({
