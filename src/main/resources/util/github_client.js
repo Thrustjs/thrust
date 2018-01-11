@@ -24,7 +24,7 @@ function getBriefJson(owner, repository) {
 
 function downloadFiles(owner, repository, path, destFile) {
 	var httpClient = require("/util/httpClient");
-	
+
 	var result = httpClient.get("https://api.github.com/repos/" + owner + "/" + repository + "/contents/" + path)
 	
 	if (result) {

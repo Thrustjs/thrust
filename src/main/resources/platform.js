@@ -14,6 +14,8 @@ var Collectors = Java.type("java.util.stream.Collectors");
 
 var ThrustCore = Java.type("br.com.softbox.thrust.core.ThrustCore");
 
+var LIB_PATH = ".lib"
+
 //Essa variável é usada para controlar o path atual do require, para que seja possível
 //fazer require de "./" dentro de um bitcode por exemplo.
 var _currentRequireDir = new ThreadLocal();
@@ -26,7 +28,8 @@ var _self = this;
 init();
 
 function init() {
-	requireGlobalBitCodesByConfig();
+	requireGlobalBitCodesByConfig()
+	loadRuntimeJars()
 	
 	if(getConfig().transpileScripts) {
 		//requireBabelToGlobal();
@@ -76,7 +79,7 @@ function getScriptContent(fileName, strictRequire) {
 			if (relativeRequire) {
 				possiblePaths.push(rootPath);
 			} else {
-				possiblePaths.push(rootPath + File.separator + ThrustCore.LIB_PATH);
+				possiblePaths.push(rootPath + File.separator + LIB_PATH + File.separator + "bitcodes");
 			}
 		}
 		
@@ -182,6 +185,16 @@ function requireGlobalBitCodesByConfig() {
 			
 			_self[bitCodeName] = require(bitCodeFileName);
 		});
+	}
+}
+
+function loadRuntimeJars() {
+	var jarLibDir = Paths.get(LIB_PATH, "jars").toFile()
+	
+	if (jarLibDir.exists()) {
+		Java.from(jarLibDir.listFiles()).forEach(function(libFile) {
+			loadJar(libFile.getPath())
+		})
 	}
 }
 
