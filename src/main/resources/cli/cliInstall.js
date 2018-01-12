@@ -107,7 +107,7 @@ function installBitcodes(installDir, client, bitcodesToInstall) {
 		var cachedBitcode = findBitcodeInLocalCache(owner, repository, libBriefJson.version)
 		
 		if (cachedBitcode) {
-			log("Found version " + cachedBitcode.version  + " on cache...")
+			log("Version " + cachedBitcode.version  + " found on cache...")
 
 			FileUtils.copyDirectory(cachedBitcode.file, libBitcodeDir)
 		} else {
@@ -130,7 +130,9 @@ function installBitcodes(installDir, client, bitcodesToInstall) {
 		
 		var dependencies = libBriefJson.dependencies
 		
-		if (dependencies) {
+		if (!dependencies) {
+			print("DONE")
+		} else {
 			if (Array.isArray(dependencies)) { //An array deps is only bitcode dependencies
 				print("DONE")
 				
@@ -146,8 +148,6 @@ function installBitcodes(installDir, client, bitcodesToInstall) {
 					installBitcodes(installDir, client, dependencies.bitcodes)
 				}
 			}
-		} else {
-			print("DONE")
 		}
 	});
 }

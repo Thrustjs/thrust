@@ -8,7 +8,7 @@ function processCommand(args, cliCommands) {
   var optionName;
   
   args.forEach(function(arg) {
-      if (arg.indexOf('-') == 0) {
+      if (arg.indexOf("-") === 0) {
     	if (optionName) {
     	  argsMD.options[optionName] = true
     	}

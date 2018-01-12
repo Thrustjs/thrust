@@ -30,7 +30,7 @@ function runInit(runInfo) {
 		if (runInfo.options.force) {
 			FileUtils.cleanDirectory(installDirFile);
 		} else {
-			print('[ERROR] It seems that you already have files on \'' + installDir + '\'. We need a new/clean directory.')
+			print('[ERROR] The directory '+ installDir + ' must be empty. You can use -f option to force init (it will clean the directory)...')
 			return
 		}
 	}
