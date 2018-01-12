@@ -12,6 +12,8 @@ buildscript {
     }
 }
 
+version '0.1.0'
+
 apply plugin: 'java'
 apply plugin: 'org.junit.platform.gradle.plugin'
 apply plugin: 'nebula.ospackage'
@@ -54,7 +56,6 @@ jar {
 }
 
 ospackage {
-    version = '0.1.0'
     release = '1'
     os = LINUX
     user = 'root'
@@ -76,7 +77,7 @@ ospackage {
 
 
 task buildZip(type: Zip, dependsOn: 'jar') {
-    baseName = 'thrust-0.1.0'
+    baseName = 'thrust'
     from (tasks.jar.archivePath) {
         into 'lib'
     }
@@ -90,7 +91,6 @@ task buildZip(type: Zip, dependsOn: 'jar') {
 setupBuilder {
     vendor = 'Softbox'
     application = 'Thrust'
-    version = '0.1.0'
     description = 'Thrust its an JavaScript interpreter/executor container, in other words, a server-side Javascript (SSJS).'
     icons = "src/main/resources/image/icon.ico"
     licenseFile "src/main/resources/license/license_en.txt"
