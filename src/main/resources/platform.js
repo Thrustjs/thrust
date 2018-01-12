@@ -228,6 +228,29 @@ function getConfig() {
 	return _config;
 }
 
+function getBitcodeConfig(bitcode) {
+	var config = getConfig()[bitcode] || {}
+	
+	return function(property, appId) {
+		var propertyPath = property.split('.')
+		
+		var result = propertyPath.reduce(function(map, currProp){
+			if (map && map[currProp]) {
+				return map[currProp]
+		    } else {
+				return undefined
+			}
+			
+		}, config)
+		
+		if (appId && typeof result === 'object' && result[appId]) {
+			result = result[appId]
+		}
+		
+		return result;
+	}
+}
+
 function readJson(filePathName, charSet) {
     var content = null;
     var cs = charSet || StandardCharsets.UTF_8;
