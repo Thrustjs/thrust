@@ -22,4 +22,4 @@ if errorlevel == 1 (
 )
 
 rem Running app
-"%JAVA%" -jar ../lib/thrust.jar %*
+"%JAVA%" -jar "%THRUST_HOME%\lib\thrust.jar" %*

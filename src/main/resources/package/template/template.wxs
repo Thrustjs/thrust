@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product>
+    <DirectoryRef Id="INSTALLDIR">
+        <Component Id="cmpEnvironmentVariable" Guid="a03f43ce-a3e4-4b4d-bc0d-7b59c99cf31b" KeyPath="yes">
+            <Environment Id="AddThrustHome" Name="THRUST_HOME" Action='set' Permanent='no' System='yes' Part='last' Value='[INSTALLDIR]'/>
+            <Environment Id="UpdatePath" Name="PATH" Action='set' Permanent='no' System='yes' Part='last' Value='%THRUST_HOME%\bin'/>
+        </Component>
+    </DirectoryRef>
+    <Feature Id="MainApplication">
+        <ComponentRef Id="cmpEnvironmentVariable"/>
+    </Feature>
+    </Product>
+</Wix>

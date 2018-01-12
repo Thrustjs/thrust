@@ -1,16 +1,21 @@
 buildscript {
     repositories {
         mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
     dependencies {
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.1'
         classpath 'com.netflix.nebula:gradle-ospackage-plugin:4.4.0'
+        classpath "gradle.plugin.de.inetsoftware:SetupBuilder:3.4.3"
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'org.junit.platform.gradle.plugin'
 apply plugin: 'nebula.ospackage'
+apply plugin: 'de.inetsoftware.setupbuilder'
 
 repositories {
     jcenter()
@@ -76,7 +81,32 @@ task buildZip(type: Zip, dependsOn: 'jar') {
         into 'lib'
     }
     from ('src/main/resources/scripts/') {
-        include '*.bat'
+        include '*.cmd'
         into 'bin'
     }
 }
+
+
+setupBuilder {
+    vendor = 'Softbox'
+    application = 'Thrust'
+    version = '0.1.0'
+    description = 'Thrust its an JavaScript interpreter/executor container, in other words, a server-side Javascript (SSJS).'
+    icons = "src/main/resources/image/icon.ico"
+    licenseFile "src/main/resources/license/license_en.txt"
+}
+
+
+msi {
+    wxsTemplate = 'src/main/resources/package/template/template.wxs'
+    from (tasks.jar.archivePath) {
+        into 'lib'
+    }
+    from ('src/main/resources/scripts/') {
+        include '*.cmd'
+        into 'bin'
+    }
+}
+
+msi.dependsOn jar
+
