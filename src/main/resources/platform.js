@@ -14,6 +14,8 @@ var Collectors = Java.type("java.util.stream.Collectors");
 
 var ThrustCore = Java.type("br.com.softbox.thrust.core.ThrustCore");
 
+var LIB_PATH = ".lib"
+
 //Essa variável é usada para controlar o path atual do require, para que seja possível
 //fazer require de "./" dentro de um bitcode por exemplo.
 var _currentRequireDir = new ThreadLocal();
@@ -26,7 +28,8 @@ var _self = this;
 init();
 
 function init() {
-	requireGlobalBitCodesByConfig();
+	requireGlobalBitCodesByConfig()
+	loadRuntimeJars()
 	
 	if(getConfig().transpileScripts) {
 		//requireBabelToGlobal();
@@ -76,7 +79,7 @@ function getScriptContent(fileName, strictRequire) {
 			if (relativeRequire) {
 				possiblePaths.push(rootPath);
 			} else {
-				possiblePaths.push(rootPath + File.separator + ThrustCore.LIB_PATH);
+				possiblePaths.push(rootPath + File.separator + LIB_PATH + File.separator + "bitcodes");
 			}
 		}
 		
@@ -121,10 +124,16 @@ function getScriptContent(fileName, strictRequire) {
 }
 
 function loadJar(jarName) {
-	var searchPath = _currentRequireDir.get();
+	var searchPath
 	
-	if (searchPath == null) {
-		searchPath = rootPath;
+	if (jarName.startsWith("./") || jarName.startsWith("../")) {
+		searchPath = _currentRequireDir.get();
+		
+		if (searchPath == null) {
+			searchPath = rootPath;
+		}
+	} else {
+		searchPath = rootPath + File.separator + LIB_PATH + File.separator + "jars"
 	}
 	
 	try {
@@ -139,7 +148,7 @@ function loadJar(jarName) {
 			throw new Error();
 		}
 	} catch (e) {
-		throw new Error("[ERROR] Cannot load .jar: " + jarName);
+		throw new Error("[ERROR] Cannot load jar: " + jarName);
 	}
 }
 
@@ -185,6 +194,18 @@ function requireGlobalBitCodesByConfig() {
 	}
 }
 
+function loadRuntimeJars() {
+	var jarLibDir = Paths.get(rootPath, LIB_PATH, "jars").toFile()
+	
+	if (jarLibDir.exists()) {
+		Java.from(jarLibDir.listFiles()).forEach(function(libFile) {
+			if (libFile.isFile()) {
+				loadJar(libFile.getName())
+			}
+		})
+	}
+}
+
 function requireBabelToGlobal() {
 	var inStream = ThrustCore.class.getResourceAsStream("/babel.min.js");
 	var reader = new BufferedReader(new InputStreamReader(inStream));
@@ -205,6 +226,29 @@ function getConfig() {
 	}
 	
 	return _config;
+}
+
+function getBitcodeConfig(bitcode) {
+	var config = getConfig()[bitcode] || {}
+	
+	return function(property, appId) {
+		var propertyPath = property.split('.')
+		
+		var result = propertyPath.reduce(function(map, currProp){
+			if (map && map[currProp]) {
+				return map[currProp]
+		    } else {
+				return undefined
+			}
+			
+		}, config)
+		
+		if (appId && typeof result === 'object' && result[appId]) {
+			result = result[appId]
+		}
+		
+		return result;
+	}
 }
 
 function readJson(filePathName, charSet) {

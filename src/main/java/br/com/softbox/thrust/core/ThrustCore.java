@@ -24,14 +24,12 @@ import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
 @SuppressWarnings("restriction")
 public class ThrustCore {
-	public static final String LIB_PATH = "lib";
-
 	private ScriptEngine engine;
 	private ScriptContext rootContext;
 	private Bindings rootScope;
 
 	private String rootPath;
-
+	
 	public ThrustCore() throws ScriptException, IOException, NoSuchMethodException {
 		initialize(null);
 	}
