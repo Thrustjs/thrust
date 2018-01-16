@@ -5,12 +5,23 @@ var window = this;
 var process = {
     env: {}
 };
+
+function show() {
+    var args = Array.prototype.slice.call(arguments).map(function(arg) {
+        return (arg && arg.constructor && (arg.constructor.name == "Array" || arg.constructor.name === "Object"))
+            ? JSON.stringify(arg)
+            : arg
+    })
+
+    print.apply(null, args)
+}
+
 var console = {};
-console.debug = print;
-console.warn = print;
-console.log = print;
-console.error = print;
-console.trace = print;
+console.debug = show;
+console.warn = show;
+console.log = show;
+console.error = show;
+console.trace = show;
 
 if (!Object.assign) {
     Object.defineProperty(Object, 'assign', {

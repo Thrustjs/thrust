@@ -25,7 +25,7 @@ function runInstall(runInfo) {
 	if (runInfo.args.basePath) {
 		installDir = new File(runInfo.args.basePath)
 	} else {
-		installDir = new File(".").getAbsolutePath()
+		installDir = new File("").getAbsolutePath()
 	}
 	
 	var briefJsonFile = new File(installDir, "brief.json")
@@ -38,28 +38,82 @@ function runInstall(runInfo) {
 	
 	var client = require("/util/github_client")
 
-	var bitcode = runInfo.args.bitcode
+	var resource = runInfo.args.resource
 	var bitcodesToInstall
+	var jarsToInstall
 	
-	if (bitcode) { //Install only this bitcode
-		bitcodesToInstall = [bitcode]
+	if (resource) { //Install only this resource
+		var depParts = resource.split(":")
+		
+		if (depParts.length == 3) {
+			jarsToInstall = [resource] //is a jar
+		} else {
+			bitcodesToInstall = [resource] //is a bitcode
+		}
 	} else { //Install all bitcodes based on brief.json
-		bitcodesToInstall = briefJson.dependencies
-	}
-	
-	if (!bitcodesToInstall || bitcodesToInstall.length == 0) {
-		throw new Error('No dependencies was found to install.')
-	}
-	
-	installBitcodes(installDir, client, bitcodesToInstall)
-	
-	if (bitcode) {
-		if (!briefJson.dependencies) {
-			briefJson.dependencies = []
+		var dependencies = briefJson.dependencies
+		
+		if (dependencies) {
+			if (Array.isArray(dependencies)) { //An array deps is only bitcode dependencies
+				bitcodesToInstall = dependencies
+			} else {
+				if (Array.isArray(dependencies.bitcodes)) {
+					bitcodesToInstall = dependencies.bitcodes
+				}
+				
+				if (Array.isArray(dependencies.jars)) {
+					jarsToInstall = dependencies.jars
+				}
+			}
 		}
 		
-		if (briefJson.dependencies.indexOf(bitcode) < 0) {
-			briefJson.dependencies.push(bitcode)
+		if ((!bitcodesToInstall || (bitcodesToInstall.length || 0) == 0) && (!jarsToInstall || (jarsToInstall.length || 0) == 0)) {
+			throw new Error('No dependencies was found to install.')
+		}
+	}
+	
+	if (bitcodesToInstall) {
+		installBitcodes(installDir, client, bitcodesToInstall)
+	}
+	
+	if (jarsToInstall) {
+		installJarDependencies(jarsToInstall)
+	}
+	
+	if (resource) {
+		var depsArr
+		
+		if (jarsToInstall) {
+			depsArr = briefJson.dependencies
+			
+			if (!depsArr || Array.isArray(depsArr)) {
+				briefJson.dependencies = {
+					bitcodes: depsArr || [],
+					jars: []
+				}
+				
+				depsArr = briefJson.dependencies.jars;
+			} else if (depsArr) {
+				depsArr = depsArr.jars
+			}
+			
+			if (!depsArr) {
+				depsArr = briefJson.dependencies.jars = []
+			}
+		} else {
+			depsArr = briefJson.dependencies
+			
+			if (depsArr && !Array.isArray(depsArr) && depsArr.bitcodes) {
+				depsArr = depsArr.bitcodes;
+			}
+			
+			if (!Array.isArray(depsArr)) {
+				depsArr = briefJson.dependencies = []
+			}
+		}
+		
+		if (depsArr.indexOf(resource) < 0) {
+			depsArr.push(resource)
 
 			FileUtils.write(briefJsonFile, JSON.stringify(briefJson, null, 2));
 		}
@@ -167,18 +221,27 @@ function installJarDependencies(jarDeps) {
 		
 		var libJarFile = new File(LIB_PAR_JAR, jarName)
 		
+		log("Installing jar: " + jarName + "...")
+		
 		if (libJarFile.exists()) {
+			print("jar is already installed")
 			return
 		}
 		
 		var jarCache = Paths.get(LOCAL_REPO_JAR, group, jarName).toFile()
 		
 		if (!jarCache.exists()) { //not found on cache
+			log("Not found on cache, downloading...")
+			
 			var url = new URL(formatString(MAVEN_BASE_URL, group.replace(/\./g, "/"), artifact, version, jarName))
 			FileUtils.copyURLToFile(url, jarCache);
+		} else {
+			log("Version " + version  + " found on cache...")
 		}
 
 		FileUtils.copyFile(jarCache, libJarFile)
+		
+		print("DONE")
 	})
 }
 

@@ -14,6 +14,8 @@ var Collectors = Java.type("java.util.stream.Collectors");
 
 var ThrustCore = Java.type("br.com.softbox.thrust.core.ThrustCore");
 
+var DEF_BITCODES_OWNER = "thrust-bitcodes"
+	
 var LIB_PATH = ".lib"
 
 //Essa variável é usada para controlar o path atual do require, para que seja possível
@@ -42,8 +44,17 @@ function require(fileName, strictRequire){
 		var module = { 
 			exports: exports
 		}
-	    eval(getScriptContent(fileName, strictRequire))
-	    return exports
+	    
+		var scriptContent = getScriptContent(fileName, strictRequire)
+	    eval(scriptContent)
+	    
+	    if (exports !== module.exports) {
+	    	for (var att in module.exports) { 
+		    	exports[att] = module.exports[att] 
+	    	}
+	    }
+
+		return exports
 	})()
 }
 
@@ -58,6 +69,10 @@ function getScriptContent(fileName, strictRequire) {
 		if (fileName.endsWith(".js")) {
 			possibleFileNames.push(fileName);
 		} else {
+			if (fileName.indexOf('/') < 0) {
+				fileName = DEF_BITCODES_OWNER + "/" + fileName;
+			}
+			
 			if (!strictRequire) {
 				possibleFileNames.push(fileName + File.separator + "index.js");
 			}
@@ -136,8 +151,10 @@ function loadJar(jarName) {
 		searchPath = rootPath + File.separator + LIB_PATH + File.separator + "jars"
 	}
 	
+	var jarPath = searchPath + File.separator + jarName
+	
 	try {
-		var jarFile = new File(searchPath + File.separator + jarName);
+		var jarFile = new File(jarPath);
 		
 		if (jarFile.exists()) {
 			var method = URLClassLoader.class.getDeclaredMethod("addURL", [URL.class]);
@@ -145,10 +162,10 @@ function loadJar(jarName) {
 			method.setAccessible(true);
 		    method.invoke(ClassLoader.getSystemClassLoader(), [jarFile.toURI().toURL()]);
 		} else {
-			throw new Error();
+			throw new Error("File not found");
 		}
 	} catch (e) {
-		throw new Error("[ERROR] Cannot load jar: " + jarName);
+		throw new Error("[ERROR] Cannot load jar '" + jarPath + "': " + e.message);
 	}
 }
 
@@ -232,7 +249,7 @@ function getBitcodeConfig(bitcode) {
 	var config = getConfig()[bitcode] || {}
 	
 	return function(property, appId) {
-		var propertyPath = property.split('.')
+		var propertyPath = property ? property.split('.') : []
 		
 		var result = propertyPath.reduce(function(map, currProp){
 			if (map && map[currProp]) {

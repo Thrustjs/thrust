@@ -34,9 +34,9 @@ var CLI_COMMANDS = [ {
 	name : [ 'install' ],
 	description: 'Install or update bitcodes on a Thrust app',
 	args : [ {
-		name : 'bitcode',
-		description : 'Name of the bitcode to be installed.'
-	} ],
+		name : 'resource',
+		description : 'Name of the bitcode or jar to be installed.'
+	}],
 	runner : '/cli/cliInstall'
 } ];
 
