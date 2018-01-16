@@ -49,8 +49,8 @@ jar {
 }
 
 ospackage {
-    version = '0.1.0'
-    release = '1'
+    version = '0.2.0'
+    release = '2'
     os = LINUX
     user = 'root'
 
