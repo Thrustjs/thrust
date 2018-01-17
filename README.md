@@ -28,6 +28,7 @@ Você também pode criar os seus próprios bitcodes e utilizá-los em seus Thrus
 ## Como usar?
 
  1 - Realize o download do [Thrust release] e instale.
+ 
  2 - O cli "thrust" agora estará disponível em seu terminal.
 
 Agora, você poderá usar ```thrust init [/home/user/projects/thrust-test]``` para inicializar um novo app Thrust no diretório corrente ou no que foi passado como argumento.
