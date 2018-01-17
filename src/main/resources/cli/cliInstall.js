@@ -77,7 +77,7 @@ function runInstall(runInfo) {
 	}
 	
 	if (jarsToInstall) {
-		installJarDependencies(jarsToInstall)
+		installJarDependencies(installDir, jarsToInstall)
 	}
 	
 	if (resource) {
@@ -193,7 +193,7 @@ function installBitcodes(installDir, client, bitcodesToInstall) {
 				installBitcodes(installDir, client, dependencies)
 			} else {
 				if (Array.isArray(dependencies.jars)) { //jar dependencies
-					installJarDependencies(dependencies.jars)
+					installJarDependencies(installDir, dependencies.jars)
 				}
 				
 				print("DONE")
@@ -206,7 +206,7 @@ function installBitcodes(installDir, client, bitcodesToInstall) {
 	});
 }
 
-function installJarDependencies(jarDeps) {
+function installJarDependencies(installDir, jarDeps) {
 	jarDeps.forEach(function(jarDep) {
 		var depParts = jarDep.split(":")
 		
@@ -219,7 +219,7 @@ function installJarDependencies(jarDeps) {
 		var version = depParts[2]
 		var jarName = artifact.concat("-").concat(version).concat(".jar")
 		
-		var libJarFile = new File(LIB_PAR_JAR, jarName)
+		var libJarFile = Paths.get(installDir, LIB_PAR_JAR, jarName).toFile()
 		
 		log("Installing jar: " + jarName + "...")
 		

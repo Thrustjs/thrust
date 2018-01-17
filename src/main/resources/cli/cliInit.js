@@ -90,7 +90,6 @@ function runInit(runInfo) {
     FileUtils.deleteDirectory(new File(installDir + File.separator + directories[0]))
     FileUtils.deleteDirectory(new File(installDir + File.separator + "git-hooks"))
     FileUtils.deleteQuietly(new File(installDir + File.separator + "brief.json"))
-    FileUtils.deleteQuietly(new File(installDir + File.separator + ".gitignore"))
     FileUtils.deleteQuietly(new File(installDir + File.separator + "README.md"))
     FileUtils.deleteQuietly(new File(installDir + File.separator + "LICENSE"))
     
