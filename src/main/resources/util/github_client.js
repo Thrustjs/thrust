@@ -62,6 +62,7 @@ function downloadFiles(owner, repository, path, destFile) {
 
 function treatRateLimitError(e, resource) {
 	if (e instanceof IOException) {
+		print(e)
 		throw new Error("Failed to read " + resource + " from GitHub, you can't install from a private repository yet, or possibly you have surpassed the rate limit of their API.\nMore on: https://developer.github.com/v3/#rate-limiting")
 	}
 	

@@ -40,19 +40,25 @@ function init() {
 
 function require(fileName, strictRequire){
 	return (function() {
-		var exports = {}
-		var module = { 
-			exports: exports
+		var exports = _scriptCache[fileName]
+		
+		if (!exports || getConfig().developmentMode === true || getConfig().cacheScript === false) {
+			exports = {}
+			var module = { 
+				exports: exports
+			}
+			
+			var scriptContent = getScriptContent(fileName, strictRequire)
+		    eval(scriptContent)
+		    
+		    if (exports !== module.exports) {
+		    	for (var att in module.exports) { 
+			    	exports[att] = module.exports[att] 
+		    	}
+		    }
+			
+			_scriptCache[fileName] = exports
 		}
-	    
-		var scriptContent = getScriptContent(fileName, strictRequire)
-	    eval(scriptContent)
-	    
-	    if (exports !== module.exports) {
-	    	for (var att in module.exports) { 
-		    	exports[att] = module.exports[att] 
-	    	}
-	    }
 
 		return exports
 	})()
@@ -102,27 +108,21 @@ function getScriptContent(fileName, strictRequire) {
 			return possibleFileNames.every(function(possibleName) {
 				var scriptPath = basePath + File.separator + possibleName
 				var scriptFile = new File(scriptPath)
-				
-				var scriptInfo = _scriptCache[scriptFile.getAbsolutePath()]
-				
-				if (scriptInfo && scriptInfo.loadTime > scriptFile.lastModified()) {
-					scriptContent = scriptInfo.scriptContent
-				} else if (scriptFile.exists()){
+
+				if (scriptFile.exists()){
 					scriptContent = new JString(Files.readAllBytes(scriptFile.toPath()), StandardCharsets.UTF_8)
 					
 					if (getConfig().transpileScripts) {
 						//TODO: O código abaixo não executa o index.js, por conta da falta de ; antes do exports
 						//scriptContent = "Babel.transform(\"" + scriptContent.replaceAll("\n", " \t\\\\\n").replaceAll("\\\"", "\\\\\"") + "\", {presets:  [ [\"es2015\"] ]} ).code.replace('\"use strict\";', '')";
 					}
-					
-					updateScriptCache(scriptFile, scriptContent)
 				}
-			
+
 				if (scriptContent != null) {
 					_currentRequireDir.set(scriptFile.getParent())
 					return false
 				}
-				
+
 				return true
 			})
 		})
@@ -166,21 +166,6 @@ function loadJar(jarName) {
 		}
 	} catch (e) {
 		throw new Error("[ERROR] Cannot load jar '" + jarPath + "': " + e.message);
-	}
-}
-
-function updateScriptCache(scriptFile, scriptContent) {
-	var scriptInfo = _scriptCache[scriptFile.getAbsolutePath()];
-	
-	if (!scriptInfo) {
-		scriptInfo = {
-			scriptContent: scriptContent,
-			loadTime: Date.now()
-		};
-		
-		_scriptCache[scriptFile.getAbsolutePath()] = scriptInfo;
-	} else {
-		scriptInfo.scriptContent = scriptContent;
 	}
 }
 
