@@ -27,8 +27,8 @@ Você também pode criar os seus próprios bitcodes e utilizá-los em seus Thrus
 
 ## Como usar?
 
-1 - Realize o download do [Thrust release] e instale.
-2 - O cli "thrust" agora estará disponível em seu terminal.
+ 1 - Realize o download do [Thrust release] e instale.
+ 2 - O cli "thrust" agora estará disponível em seu terminal.
 
 Agora, você poderá usar ```thrust init [/home/user/projects/thrust-test]``` para inicializar um novo app Thrust no diretório corrente ou no que foi passado como argumento.
 
@@ -37,8 +37,6 @@ Você pode passar uma opção para init chamada ```-t|-template```, para iniciar
 Você também pode criar os seus próprios seeds e utilizá-los em seus Thrust apps.
 
 Visite também o nosso [GitBook] para uma documentação completa do Thrust.
-
-## Have fun!
 
 [Thrust release]: https://github.com/Thrustjs/thrust/releases
 [thrust-seeds/web-complete]: https://github.com/thrust-seeds/web-complete
