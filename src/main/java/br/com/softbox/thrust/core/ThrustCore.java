@@ -156,8 +156,8 @@ public class ThrustCore {
 		return result;
 	}
 
-	public JSObject require(String fileName, boolean strictRequire) throws Exception {
-		return invokeFunction("require", fileName, strictRequire);
+	public JSObject require(String fileName) throws Exception {
+		return invokeFunction("require", fileName);
 	}
 
 	private void validateRootPath() {
