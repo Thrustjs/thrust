@@ -124,6 +124,18 @@ function getConfig()
 function getBitcodeConfig(bitcode)
 ```
 
+## Parâmetros de configuração
+As propriedades abaixo devem ser configuradas no arquivo *config.json* (distribuído juntamente com o ThrustJS):
+
+``` javascript
+/* Os valores abaixo representam os valores default*/
+{
+  "loadToGlobal": [],/*String/Array Bitcodes que devem ser carregados globalmente*/
+  "developmentMode": false, /*Determina se o ambiente é de desenvolviment ou não (desabilita cache dp require)*/
+  "cacheScript": false, /*Liga ou desliga o cache do require*/
+}
+```
+
 Visite também o nosso [GitBook] para uma documentação completa do *thrust*.
 
 [thrust]: https://github.com/Thrustjs/thrust/releases
