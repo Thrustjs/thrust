@@ -24,14 +24,12 @@ import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
 @SuppressWarnings("restriction")
 public class ThrustCore {
-	public static final String LIB_PATH = "lib";
-
 	private ScriptEngine engine;
 	private ScriptContext rootContext;
 	private Bindings rootScope;
 
 	private String rootPath;
-
+	
 	public ThrustCore() throws ScriptException, IOException, NoSuchMethodException {
 		initialize(null);
 	}
@@ -158,8 +156,8 @@ public class ThrustCore {
 		return result;
 	}
 
-	public JSObject require(String fileName, boolean strictRequire) throws Exception {
-		return invokeFunction("require", fileName, strictRequire);
+	public JSObject require(String fileName) throws Exception {
+		return invokeFunction("require", fileName);
 	}
 
 	private void validateRootPath() {

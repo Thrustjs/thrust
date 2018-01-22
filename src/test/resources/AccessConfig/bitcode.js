@@ -1,7 +1,3 @@
-getConfig = function() {
-	return {}
-}
-
 let config = getConfig()
 
 console.log(JSON.stringify(config))

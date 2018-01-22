@@ -12,7 +12,7 @@ buildscript {
     }
 }
 
-version '0.1.0'
+version '0.2.0'
 
 apply plugin: 'java'
 apply plugin: 'org.junit.platform.gradle.plugin'
@@ -49,6 +49,7 @@ jar {
   }
   archiveName = 'thrust.jar'
   destinationDir new File("$rootDir/dist")
+
   from {
     configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
   }
@@ -57,7 +58,7 @@ jar {
 }
 
 ospackage {
-    release = '1'
+    release = '2'
     os = LINUX
     user = 'root'
 
