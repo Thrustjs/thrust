@@ -68,3 +68,7 @@ todo.txt
 dist/seed
 /.metadata/
 .classpath
+dist/
+.idea/
+/*.iml
+/out
