@@ -47,12 +47,13 @@ jar {
   manifest {
     attributes 'Main-Class': 'br.com.softbox.thrust.main.Main'
   }
-
+  archiveName = 'thrust.jar'
   destinationDir new File("$rootDir/dist")
-
   from {
     configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
   }
+  /*removendo do jar itens utilizados para o empacotamento*/
+  exclude 'packing'
 }
 
 ospackage {
@@ -60,14 +61,14 @@ ospackage {
     os = LINUX
     user = 'root'
 
-    postInstall file('src/main/resources/scripts/postInstall.sh')
+    postInstall file('src/main/resources/packing/scripts/postInstall.sh')
 
     into '/opt/thrust'
 
     from(jar.outputs.files) {
         into 'lib'
     }
-    from('src/main/resources/scripts') {
+    from('src/main/resources/packing/scripts') {
     	into 'bin'
         fileMode = 0755
     }
@@ -81,7 +82,7 @@ task buildZip(type: Zip, dependsOn: 'jar') {
     from (tasks.jar.archivePath) {
         into 'lib'
     }
-    from ('src/main/resources/scripts/') {
+    from ('src/main/resources/packing/scripts/') {
         include '*.cmd'
         into 'bin'
     }
@@ -92,21 +93,26 @@ setupBuilder {
     vendor = 'Softbox'
     application = 'Thrust'
     description = 'Thrust its an JavaScript interpreter/executor container, in other words, a server-side Javascript (SSJS).'
-    icons = "src/main/resources/image/icon.ico"
-    licenseFile "src/main/resources/license/license_en.txt"
+    icons = "src/main/resources/packing/image/icon.ico"
+    licenseFile "src/main/resources/packing/license/license_en.txt"
 }
 
 
 msi {
-    wxsTemplate = 'src/main/resources/package/template/template.wxs'
+    wxsTemplate = 'src/main/resources/packing/template/template.wxs'
     from (tasks.jar.archivePath) {
         into 'lib'
     }
-    from ('src/main/resources/scripts/') {
+    from ('src/main/resources/packing/scripts/') {
         include '*.cmd'
         into 'bin'
     }
 }
 
+msi.dependsOn clean
 msi.dependsOn jar
 
+/* removendo tasks não utilizadas do plugin SetupBuilder*/
+tasks.remove(deb)
+tasks.remove(dmg)
+tasks.remove(rpm)
