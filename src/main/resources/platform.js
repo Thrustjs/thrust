@@ -69,7 +69,7 @@ function require(fileName) {
       var scriptInfo = _scriptCache[fileName]
 
       if (!scriptInfo || getConfig().developmentMode === true || getConfig().cacheScript === false || scriptInfo.isModified()) {
-        exports = {}
+        var exports = {}
         var module = {
           exports: exports
         }
