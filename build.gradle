@@ -71,6 +71,7 @@ ospackage {
     }
     from('src/main/resources/packing/scripts') {
     	into 'bin'
+        include '*.sh'
         fileMode = 0755
     }
 
