@@ -8,6 +8,9 @@ var Long = Java.type("java.lang.Long")
 var FilenameFilter = Java.type("java.io.FilenameFilter")
 var FileUtils = Java.type("org.apache.commons.io.FileUtils")
 
+var repoDownloder = require('/util/repoDownloader')
+var Utils = require("/util/util")
+
 var DEF_SEED_OWNER = "thrust-seeds"
 	
 function runInit(runInfo) {
@@ -30,89 +33,76 @@ function runInit(runInfo) {
 		if (runInfo.options.force) {
 			FileUtils.cleanDirectory(installDirFile);
 		} else {
-			print('[ERROR] The directory '+ installDir + ' must be empty. You can use -f option to force init (it will clean the directory)...')
+			print('[ERROR] The directory '+ installDirFile.getAbsolutePath() + ' must be empty. You can use -f option to force init (it will clean the directory)...')
 			return
 		}
 	}
 	
-    var owner
-    var repository
-    
-    var template = runInfo.options.template
-    
-    if (template.indexOf('/') > -1) {
-    	var t = template.split('/')
-    	owner = t[0]
-    	repository = t[1]
-    	
-    	if (!owner) {
-    		throw new Error("Invalid owner on template: " + template + "\nMust be 'owner/template' or just 'template' in case of a default seed.")
-    	}
-    	
-    	if (!repository) {
-    		throw new Error("Invalid repository on template: " + template + "\nMust be 'owner/template' or just 'template' in case of a default seed.")
-    	}
-    } else {
-    	repository = template
-    }
-    
-    if (!owner) {
-    	owner = DEF_SEED_OWNER
-    }
-    
-    var client = require("/util/github_client")
-    
-    print("Creating a new Thrust app on " + installDir + ", based on seed '" + repository + "'. Pease wait...")
-    
-    var briefJson = client.getBriefJson(owner, repository)
-    
-    if (!briefJson) {
-    	throw new Error("Invalid thrust-seed, 'brief.json' was not found on " + owner + "/" + repository)
-    }
-    
-    var zipFileName = "thrustinit.zip"
-    var zipFile = new File(installDir, zipFileName)
-    
-    client.downloadArchive(zipFile, owner, repository)
-    
-    var Utils = require("/util/util")
-    Utils.unzip(zipFile.getPath(), installDir)
-
-    var directories = installDirFile.list(new FilenameFilter() {
-        accept: function (current, name) {
-	        var file = new File(current, name)
-	        return file.isDirectory() && file.getAbsolutePath().indexOf(repository) > -1
+    try {
+    	var repository
+        
+        var template = runInfo.options.template
+        
+        if (template.indexOf('/') == -1) {
+        	repository = template;
+        	template = DEF_SEED_OWNER + '/' + template;
+        } else {
+        	repository = template.split('/')[0];
         }
-    })
+        
+        print("Creating a new Thrust app on " + installDir + ", based on seed '" + template + "'. Pease wait...")
+        
+        var zipFile = new File(installDir, "thrustinit.zip")
+        
+        repoDownloder.downloadZip(template, zipFile)
+        
+        var createdFiles = Utils.unzip(zipFile.getPath(), installDir)
+        
+        var unzipedDir = new File(installDir + File.separator + createdFiles[0]);
+        
+        var briefJsonFile = new File(unzipedDir, "brief.json")
+        
+        if (!briefJsonFile.exists()) {
+        	throw new Error("Invalid thrust-seed, 'brief.json' was not found on " + briefJsonFile.getAbsolutePath())
+        }
+        
+        var templateBrief = Utils.readJson(briefJsonFile.getAbsolutePath());
 
-    FileUtils.copyDirectory(new File(installDir + File.separator + directories[0]), new File(installDir))
+        FileUtils.copyDirectory(unzipedDir, new File(installDir))
 
-    FileUtils.deleteDirectory(new File(installDir + File.separator + directories[0]))
-    FileUtils.deleteDirectory(new File(installDir + File.separator + "git-hooks"))
-    FileUtils.deleteQuietly(new File(installDir + File.separator + "brief.json"))
-    FileUtils.deleteQuietly(new File(installDir + File.separator + "README.md"))
-    FileUtils.deleteQuietly(new File(installDir + File.separator + "LICENSE"))
-    
-    FileUtils.deleteQuietly(zipFile)
-    
-    var projectBrief = Object.create(null)
-    projectBrief.name = "thrust-app"
-    projectBrief.version =  "1.0"
-	projectBrief.dependencies = briefJson.dependencies
-    
-    FileUtils.write(new File(installDir, "brief.json"), JSON.stringify(projectBrief, null, 2));
-    
-    if (projectBrief.dependencies) {
-    	var installer = require('/cli/cliInstall')
-    	
-		installer.run({
-    		args: {
-    			basePath: installDir
-    		}
-    	})
+        FileUtils.deleteDirectory(unzipedDir)
+        FileUtils.deleteDirectory(new File(installDir + File.separator + "git-hooks"))
+        FileUtils.deleteQuietly(new File(installDir + File.separator + "brief.json"))
+        FileUtils.deleteQuietly(new File(installDir + File.separator + "README.md"))
+        FileUtils.deleteQuietly(new File(installDir + File.separator + "LICENSE"))
+        
+        FileUtils.deleteQuietly(zipFile)
+        
+        var projectBrief = Object.create(null)
+        projectBrief.name = "thrust-app"
+        projectBrief.version =  "1.0"
+    	projectBrief.dependencies = templateBrief.dependencies
+        
+        FileUtils.write(new File(installDir, "brief.json"), JSON.stringify(projectBrief, null, 2));
+        
+        if (projectBrief.dependencies) {
+        	var installer = require('/cli/cliInstall')
+        	
+    		installer.run({
+        		args: {
+        			basePath: installDir
+        		}
+        	})
+        }
+        
+        print()
+        
+        print("Your thrust app is ready to use.")
+    } catch(e) {
+    	FileUtils.cleanDirectory(installDirFile);
+    	print("Failed to create a new thrust app.");
+    	print(e);
     }
-    
-    print("Your Thrust app is ready to use.")
 }
 
 exports = {

@@ -8,6 +8,10 @@ var URLClassLoader = Java.type("java.net.URLClassLoader")
 var URLArr = Java.type("java.net.URL[]")
 var System = Java.type("java.lang.System")
 var Class = Java.type("java.lang.Class")
+var Files = Java.type("java.nio.file.Files");
+var Paths = Java.type("java.nio.file.Paths");
+var JString = Java.type("java.lang.String");
+var StandardCharsets = Java.type("java.nio.charset.StandardCharsets");
 
 function unzip(zipFilePath, destDirectory) {
     var destDir = undefined
@@ -21,9 +25,13 @@ function unzip(zipFilePath, destDirectory) {
     	destDirectory = new File(".").getAbsolutePath();
     }
     
+    var createdFiles = [];
+    
     var zipIn = new ZipInputStream(new FileInputStream(zipFilePath))
     var entry = zipIn.getNextEntry()
     while (entry != null) {
+    	createdFiles.push(entry.getName())
+    	
         var filePath = destDirectory + File.separator + entry.getName()
         if (!entry.isDirectory()) {
             extractFile(zipIn, filePath)
@@ -35,6 +43,8 @@ function unzip(zipFilePath, destDirectory) {
         entry = zipIn.getNextEntry()
     }
     zipIn.close()
+    
+    return createdFiles;
 }
 
 function extractFile(zipIn, filePath) {
@@ -57,7 +67,20 @@ function loadJar(jarPath, classFqn) {
     classInst.newInstance()
 }
 
+function readJson(filePathName, charSet) {
+  var content = null;
+  var cs = charSet || StandardCharsets.UTF_8;
+
+  try {
+	  content = new JString(Files.readAllBytes(Paths.get(filePathName)), cs);
+  } catch (e) {
+    throw 'Unable to read file at: ' + filePathName + ', ' + e
+  }
+  return JSON.parse(content);
+}
+
 exports = {
     unzip: unzip,
-    loadJar: loadJar
+    loadJar: loadJar,
+    readJson: readJson
 }
