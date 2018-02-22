@@ -75,9 +75,35 @@ function require(fileName) {
         }
 
         scriptInfo = getScriptInfo(fileName)
-
+        
         try {
         	eval(scriptInfo.scriptContent)
+        	
+        	if (exports !== module.exports) {
+                for (var att in module.exports) {
+                  exports[att] = module.exports[att]
+                }
+        	}
+        	
+//        	for (var name in exports) {
+//        		if (typeof exports[name] == 'function') {
+//        			exports[name] = (function(exports, fnName, oldFn) {
+//            			return function() {
+//            				try {
+//                				return oldFn.apply(exports, arguments)
+//                			} catch (e) {
+//                				print('An error was thrown in ' + exports.$$scriptInfo.fileName + ':' + fnName)
+//                				throw e
+//        					}
+//            			}
+//            		})(exports, name, exports[name])
+//        		}
+//        	}
+//        	
+//        	exports.$$scriptInfo = scriptInfo;
+        	
+            scriptInfo.exports = exports
+            _scriptCache[fileName] = scriptInfo
         } catch(e) {
         	let requireCaller = _currentRequireCaller.get();
         	requireCaller = requireCaller && requireCaller.getAbsolutePath()
@@ -90,24 +116,14 @@ function require(fileName) {
 
         	throw e
         }
-
-        if (exports !== module.exports) {
-          for (var att in module.exports) {
-            exports[att] = module.exports[att]
-          }
-        }
-
-        scriptInfo.exports = exports
-        _scriptCache[fileName] = scriptInfo
       }
-
-      return exports
+      
+      return scriptInfo.exports
     } catch(e) {
     	print(e)
     } finally {
       _currentRequireCaller.set(currentRequireCaller)
     }
-
   })()
 }
 
@@ -187,6 +203,7 @@ function getScriptInfo(fileName) {
   }
 
   return {
+	  fileName: fileName,
 	  scriptContent: scriptContent,
 	  scriptFile: scriptFile,
 	  lastModified: scriptFile.lastModified(),

@@ -1,4 +1,5 @@
 var File = Java.type("java.io.File")
+var Files = Java.type("java.nio.file.Files")
 var Paths = Java.type("java.nio.file.Paths")
 var URL = Java.type("java.net.URL")
 var Channels = Java.type("java.nio.channels.Channels")
@@ -6,6 +7,9 @@ var FileOutputStream = Java.type("java.io.FileOutputStream")
 var Long = Java.type("java.lang.Long")
 var FilenameFilter = Java.type("java.io.FilenameFilter")
 var FileUtils = Java.type("org.apache.commons.io.FileUtils")
+
+var repoDownloder = require('/util/repoDownloader')
+var Utils = require("/util/util")
 
 var DEF_BITCODES_OWNER = "thrust-bitcodes"
 	
@@ -122,87 +126,115 @@ function runInstall(runInfo) {
 
 function installBitcodes(installDir, client, bitcodesToInstall) {
 	bitcodesToInstall.forEach(function(bitcode) {
-		var owner
 		var repository
-
-		if (bitcode.indexOf('/') > -1) {
-			var t = bitcode.split('/')
-			owner = t[0]
-			repository = t[1]
-
-			if (!owner) {
-				throw new Error("Invalid owner on bitcode: " + bitcode + "\nMust be 'owner/bitcode' or just 'bitcode' in case of a default repository.")
-			}
-
-			if (!repository) {
-				throw new Error("Invalid repository on bitcode: " + bitcode + "\nMust be 'owner/bitcode' or just 'bitcode' in case of a default repository.")
-			}
-		} else {
-			repository = bitcode
-		}
-
-		if (!owner) {
-			owner = DEF_BITCODES_OWNER
-		}
+		var owner
 		
-		var bitCodeIdentifier = owner + "/" + repository;
-
-		log("Installing bitcode: " + bitCodeIdentifier + "...")
-
-		var libBriefJson = client.getBriefJson(owner, repository)
-
-		if (!libBriefJson) {
-			throw new Error("Invalid bitcode, 'brief.json' was not found on " + bitCodeIdentifier)
-		}
+		if (bitcode.indexOf('/') == -1) {
+        	owner = DEF_BITCODES_OWNER;
+        	repository = bitcode
+        	bitcode = owner + '/' + repository;
+        } else {
+        	var splitted = bitcode.split('/');
+        	owner = splitted[0];
+        	repository = splitted[1];
+        }
+		
+		log("Installing bitcode: " + bitcode + "...")
 		
 		var libBitcodeDir = Paths.get(installDir, LIB_PATH_BITCODE, owner, repository).toFile()
-
-		//Installing bitcode
-		var cachedBitcode = findBitcodeInLocalCache(owner, repository, libBriefJson.version)
 		
-		if (cachedBitcode) {
-			log("Version " + cachedBitcode.version  + " found on cache...")
+		var tempDir;
+		
+		try {
+			tempDir = Files.createTempDirectory(repository + '-install').toFile();
+			
+			var zipFile = File.createTempFile(bitcode, ".zip", tempDir)
+			
+	        repoDownloder.downloadZip(bitcode, zipFile)
+	        
+	        var createdFiles = Utils.unzip(zipFile.getPath(), tempDir)
+	        
+	        var unzipedDir = new File(tempDir + File.separator + createdFiles[0]);
+	        
+	        var briefJsonFile = new File(unzipedDir, "brief.json")
+	        
+	        if (!briefJsonFile.exists()) {
+	        	throw new Error("Invalid thrust-seed, 'brief.json' was not found on " + briefJsonFile.getAbsolutePath())
+	        }
+	        
+	        var libBriefJson = Utils.readJson(briefJsonFile);
+	        
+	        var cachedBitcode = findBitcodeInLocalCache(owner, repository, libBriefJson.version)
+	        
+	        if (cachedBitcode) {
+				log("Version " + cachedBitcode.version  + " found on cache...")
+				
+				if (libBitcodeDir.exists()) {
+					FileUtils.cleanDirectory(libBitcodeDir);
+				} else {
+					libBitcodeDir.mkdirs()
+				}
 
-			FileUtils.copyDirectory(cachedBitcode.file, libBitcodeDir)
-		} else {
-			log("Not found on cache, downloading...")
-			
-			if (!libBitcodeDir.exists()) {
-				libBitcodeDir.mkdirs()
+				FileUtils.copyDirectory(cachedBitcode.file, libBitcodeDir);
+			} else {
+				log("Not found on cache, downloading...");
+				
+				var pathToCopy = libBriefJson.path 
+		         
+		        var libCacheFile = Paths.get(LOCAL_REPO_BITCODE, owner, repository, libBriefJson.version).toFile();
+		        
+				if (libCacheFile.exists()) {
+					FileUtils.cleanDirectory(libCacheFile);
+				} else {
+					libCacheFile.mkdirs()
+				}
+				
+			    if (!pathToCopy || pathToCopy == '.') { 
+			    	FileUtils.copyDirectory(unzipedDir, libCacheFile)
+			    } else {
+			    	var fileToCopy = new File(unzipedDir, pathToCopy);
+			    	
+			    	if (fileToCopy.isDirectory()) {
+			    		FileUtils.copyDirectory(fileToCopy, libCacheFile)
+			    	} else {
+			    		FileUtils.copyFile(fileToCopy, new File(libCacheFile, pathToCopy))
+			    	}
+			    	
+			    	FileUtils.copyFile(briefJsonFile, new File(libCacheFile, "brief.json"))
+			    }
+			    
+			    if (libBitcodeDir.exists()) {
+					FileUtils.cleanDirectory(libBitcodeDir);
+				} else {
+					libBitcodeDir.mkdirs()
+				}
+				
+				FileUtils.copyDirectory(libCacheFile, libBitcodeDir)
 			}
-			
-			var pathToDownload = libBriefJson.path
-			
-			if (!pathToDownload || pathToDownload == '.') {
-				pathToDownload = ''
+		} finally {
+			if (tempDir) {
+				FileUtils.deleteDirectory(tempDir)
 			}
-			
-			client.downloadFiles(owner, repository, pathToDownload, libBitcodeDir)
-			
-			FileUtils.copyDirectory(libBitcodeDir, Paths.get(LOCAL_REPO_BITCODE, owner, repository, libBriefJson.version).toFile())
 		}
 		
 		var dependencies = libBriefJson.dependencies
 		
-		if (!dependencies) {
-			print("DONE")
-		} else {
+		if (dependencies) {
 			if (Array.isArray(dependencies)) { //An array deps is only bitcode dependencies
-				print("DONE")
-				
 				installBitcodes(installDir, client, dependencies)
 			} else {
+				print()
 				if (Array.isArray(dependencies.jars)) { //jar dependencies
 					installJarDependencies(installDir, dependencies.jars)
 				}
-				
-				print("DONE")
 				
 				if (Array.isArray(dependencies.bitcodes)) { //bitcode dependencies
 					installBitcodes(installDir, client, dependencies.bitcodes)
 				}
 			}
 		}
+		
+		print("DONE")
 	});
 }
 
@@ -255,15 +287,19 @@ function formatString(format) {
 
 function findBitcodeInLocalCache(owner, repository, minVersion) {
 	var bitcodesCache = Paths.get(LOCAL_REPO_BITCODE, owner, repository).toFile()
-	var bitcodeCache = new File(bitcodesCache, minVersion)
 	
-	var nMinVersion = versionToNumber(owner, repository, minVersion)
+	var nMinVersion;
 	
-	if (bitcodeCache.exists()) {
-		return {
-			version: minVersion,
-			nVersion: nMinVersion,
-			file: bitcodeCache
+	if (minVersion) {
+		var bitcodeCache = new File(bitcodesCache, minVersion)
+		nMinVersion = versionToNumber(owner, repository, minVersion)
+		
+		if (bitcodeCache.exists()) {
+			return {
+				version: minVersion,
+				nVersion: nMinVersion,
+				file: bitcodeCache
+			}
 		}
 	}
 	
@@ -277,7 +313,7 @@ function findBitcodeInLocalCache(owner, repository, minVersion) {
 				file: bitcodeFile
 			}
 		}).filter(function(bitCodeInfo) {
-			return bitCodeInfo.nVersion >= nMinVersion
+			return nMinVersion == undefined || bitCodeInfo.nVersion >= nMinVersion
 		}).sort(function(info1, info2) {
 			return info1.nVersion - info2.nVersion
 		}).pop()
