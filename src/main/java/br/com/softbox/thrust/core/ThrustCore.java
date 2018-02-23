@@ -25,7 +25,6 @@ import jdk.nashorn.api.scripting.ScriptObjectMirror;
 @SuppressWarnings("restriction")
 public class ThrustCore {
 	private ScriptEngine engine;
-	private ScriptContext rootContext;
 	private Bindings rootScope;
 
 	private String rootPath;
@@ -34,7 +33,7 @@ public class ThrustCore {
 		initialize(null);
 	}
 
-	public ThrustCore(String mainFilePath) throws IOException, NoSuchMethodException, ScriptException {
+	public ThrustCore(String mainFilePath) throws IOException, ScriptException {
 		File mainFile = new File(mainFilePath);
 
 		rootPath = mainFile.getParent();
@@ -57,7 +56,7 @@ public class ThrustCore {
 				Arrays.asList(args).stream().collect(Collectors.joining(",")));
 	}
 
-	protected void initialize(String rootPath) throws ScriptException, IOException, NoSuchMethodException {
+	protected void initialize(String rootPath) throws ScriptException {
 		System.setProperty("nashorn.args", "--language=es6");
 		System.setProperty("java.security.egd", "file:/dev/urandom");
 
@@ -70,7 +69,8 @@ public class ThrustCore {
 		this.rootPath = rootPath;
 
 		engine = new ScriptEngineManager().getEngineByName("nashorn");
-		rootContext = engine.getContext();
+		
+		ScriptContext rootContext = engine.getContext();
 		rootScope = rootContext.getBindings(ScriptContext.ENGINE_SCOPE);
 
 		setupContext(engine, rootContext);
@@ -80,7 +80,7 @@ public class ThrustCore {
 		ThrustUtils.loadPlatform(engine, rootContext);
 	}
 
-	public JSObject loadScript(String fileName) throws ScriptException, NoSuchMethodException, IOException {
+	public JSObject loadScript(String fileName) throws ScriptException, IOException {
 
 		InputStream in = new FileInputStream(new File(fileName));
 
@@ -104,6 +104,7 @@ public class ThrustCore {
 		try {
 			result = (JSObject) engine.eval(scriptContent, reqContext);
 		} catch (ClassCastException ignored) {
+			// ignored
 		}
 
 		return result;
@@ -123,6 +124,7 @@ public class ThrustCore {
 		try {
 			result = (JSObject) engine.eval(expression, reqContext);
 		} catch (ClassCastException ignored) {
+			// ignored
 		}
 
 		return result;
@@ -151,12 +153,13 @@ public class ThrustCore {
 		try {
 			result = (JSObject) scriptObjectMirror.callMember(fullPath[i], params);
 		} catch (ClassCastException ignored) {
+			// ignored
 		}
 
 		return result;
 	}
 
-	public JSObject require(String fileName) throws Exception {
+	public JSObject require(String fileName) throws NoSuchMethodException, ScriptException {
 		return invokeFunction("require", fileName);
 	}
 
