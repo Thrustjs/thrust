@@ -229,7 +229,7 @@ function loadJar(jarName) {
 
   if (jarName.startsWith("./") || jarName.startsWith("../")) {
 	if (_currentRequireCaller.get()) {
-		searchPath = currentRequireCaller.get().getParent();
+		searchPath = _currentRequireCaller.get().getParent();
 	}
 
     if (!searchPath) {
