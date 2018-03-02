@@ -225,17 +225,18 @@ function getScriptInfo(fileName) {
 * @code loadJar('./vendor/meuJar.jar')
 */
 function loadJar(jarName) {
-  var searchPath
+  var searchPath;
 
   if (jarName.startsWith("./") || jarName.startsWith("../")) {
-    searchPath = _currentRequireCaller.get();
-    searchPath = searchPath && searchPath.getAbsolutePath()
+	if (_currentRequireCaller.get()) {
+		searchPath = _currentRequireCaller.get().getParent();
+	}
 
-    if (searchPath == null) {
+    if (!searchPath) {
       searchPath = rootPath;
     }
   } else {
-    searchPath = rootPath + File.separator + LIB_PATH + File.separator + "jars"
+    searchPath = rootPath + File.separator + LIB_PATH + File.separator + "jars";
   }
 
   var jarPath = searchPath + File.separator + jarName
