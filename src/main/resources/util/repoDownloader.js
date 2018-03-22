@@ -1,9 +1,17 @@
 var URL = Java.type("java.net.URL")
 var FileUtils = Java.type("org.apache.commons.io.FileUtils")
 
-function downloadZip(repo, zipFile) {
-	var url = new URL(getUrl(normalize(repo)))
-	FileUtils.copyURLToFile(url, zipFile)
+function downloadZip(repo, version, zipFile) {
+  var name = repo + (version ? '@' + version : '');
+
+	var url = new URL(getUrl(normalize(name)))
+  
+  try {
+    FileUtils.copyURLToFile(url, zipFile);
+  } catch (e) {
+    console.log('Failed to install bitcode, are the name and version corrects?');
+    throw e;
+  }
 }
 
 /**
@@ -15,7 +23,7 @@ function downloadZip(repo, zipFile) {
  */
 
 function normalize (repo) {
-  var regex = /^((github|gitlab|bitbucket):)?((.+):)?([^/]+)\/([^#]+)(#(.+))?$/
+  var regex = /^((github|gitlab|bitbucket):)?((.+):)?([^/]+)\/([^@]+)(@(.+))?$/
   var match = regex.exec(repo)
   var type = match[2] || 'github'
   var origin = match[4] || null
