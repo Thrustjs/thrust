@@ -136,6 +136,21 @@ As propriedades abaixo devem ser configuradas no arquivo *config.json* (distribu
 }
 ```
 
+---
+## What's new
+
+**v0.4.0** - Feature: Versionamento de bitcodes
+Agora é possível versionar os seus bitcodes instalados, você pode instalar novamente informando a versão ou modificar diretamente em seu brief.json e rodando o install novamente.
+
+Ex:
+```
+thrust install http@0.1.8 //Baixará a tag 0.1.8 do repositório do http
+thrust install http //Baixará a master do repositório do http, visando retrocompatibilidade
+```
+O brief.json sempre é atualizado com a versão que está sendo instalada, caso já houvesse um "http" ele seria trocado por "http@0.1.8", caso esteja sendo instalado sem versão, a versão será removida do brief.
+
+---
+
 Visite também o nosso [GitBook] para uma documentação completa do *thrust*.
 
 [thrust]: https://github.com/Thrustjs/thrust/releases
