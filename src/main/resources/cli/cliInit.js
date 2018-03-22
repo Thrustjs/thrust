@@ -54,7 +54,7 @@ function runInit(runInfo) {
         
         var zipFile = new File(installDir, "thrustinit.zip")
         
-        repoDownloder.downloadZip(template, zipFile)
+        repoDownloder.downloadZip(template, '', zipFile)
         
         var createdFiles = Utils.unzip(zipFile.getPath(), installDir)
         
