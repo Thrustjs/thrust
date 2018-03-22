@@ -1,4 +1,4 @@
-Thrust v0.2.0
+Thrust v0.4.0
 ===============
 
 O *thrust* (ou *thrustjs*) é uma plataforma de execução/interpretação JavaScript, ou seja, é um Server-side JavaScript (SSJS). Ele permite a escrita de código em JavaScript a ser executado sobre a Java Virtual Machine (JVM).
@@ -20,10 +20,6 @@ Um exemplo é o bitcode [filesystem](https://github.com/thrust-bitcodes/filesyst
 O **thrust** já possui em sua versão inicial vários bitcodes que enriquecem a plataforma e auxiliam no desenvolvimento de soluções. Você pode ver cada um deles no nosso [repositório oficial](https://github.com/thrust-bitcodes).
 
 Você também pode criar os seus próprios bitcodes e utilizá-los em seus *thrust* apps.
-
-## Novidades
-
-* v.0.2.0 - Release inicial do *thrust*
 
 ## Como usar?
 
@@ -139,7 +135,7 @@ As propriedades abaixo devem ser configuradas no arquivo *config.json* (distribu
 ---
 ## What's new
 
-**v0.4.0** - Feature: Versionamento de bitcodes
+* **v0.4.0** - Feature: Versionamento de bitcodes
 Agora é possível versionar os seus bitcodes instalados, você pode instalar novamente informando a versão ou modificar diretamente em seu brief.json e rodando o install novamente.
 
 Ex:
@@ -148,6 +144,11 @@ thrust install http@0.1.8 //Baixará a tag 0.1.8 do repositório do http
 thrust install http //Baixará a master do repositório do http, visando retrocompatibilidade
 ```
 O brief.json sempre é atualizado com a versão que está sendo instalada, caso já houvesse um "http" ele seria trocado por "http@0.1.8", caso esteja sendo instalado sem versão, a versão será removida do brief.
+
+* **v.0.3.0**
+Nesta versão alteramos a maneira em que o thrust realiza os downloads de seed e bitcodes GitHub, antes baixavamos arquivo por arquivo com o intuito de ser mais simples e rápido, porém isso fazia com que o github limitasse a quantidade de downloads por hora. Agora baixamos o zip completo e extraimos o que precisamos para execução, não tendo mais problemas com limites.
+
+* **v.0.2.0** - Release inicial do *thrust*
 
 ---
 
