@@ -1,0 +1,3 @@
+exports = function () {
+  return 'value';
+}
