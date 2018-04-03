@@ -1,4 +1,4 @@
-exports = function exec (describe, it, beforeEach, afterEach, expect, should, assert) {
+exports = function exec(describe, it, beforeEach, afterEach, expect, should, assert) {
   describe('Teste de require', function () {
     it('Deve ser possível exportar uma função', function () {
       let fn = require('./require/utilFn.js');
@@ -8,6 +8,14 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
     it('Deve ser possível exportar um primitivo', function () {
       let value = require('./require/utilConst.js');
       expect(value).to.equals('value');
+    });
+
+    it('Deve ser possível exportar um json', function () {
+      let json = require('./require/utilJsonFile.json');
+      expect(json).to.be.an('object');
+      expect(json).to.nested.include({
+        'value': 'Test'
+      });
     });
 
     it('Deve conseguir cachear um require', function () {
