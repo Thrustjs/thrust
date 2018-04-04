@@ -24,21 +24,13 @@ function getThrustDir() {
     return _thrustDir.getPath();
 }
 
-function loadJar(fileName) {
-    var file = new File(fileName)
-    var method = URLClassLoader.class.getDeclaredMethod("addURL", [URL.class])
-
-    method.setAccessible(true)
-    method.invoke(ClassLoader.getSystemClassLoader(), [file.toURI().toURL()])
-}
-
-function loadRuntimeJars(libPathName) {
-    var jarLibDir = Paths.get(libPathName, "jars").toFile()
+function loadRuntimeJars(env) {
+    var jarLibDir = Paths.get(env.libRootDirectory, "jars").toFile()
 
     if (jarLibDir.exists()) {
         Java.from(jarLibDir.listFiles()).forEach(function (libFile) {
             if (libFile.isFile()) {
-                loadJar(libFile.getAbsoluteFile().getAbsolutePath())
+                loadJar.call(env, libFile.getName())
             }
         })
     }
@@ -66,6 +58,39 @@ function loadGlobalBitCodes(env) {
 
             dangerouslyLoadToGlobal(env, bitCodeExportName, require.call(env, bitCodeName));
         })
+    }
+}
+
+function loadJar(jarName) { // eslint-disable-line
+    var env = this;
+
+    var searchPath;
+
+    if (jarName.startsWith('./') || jarName.startsWith('../')) {
+        searchPath = env.requireCurrentDirectory || env.appRootDirectory
+    } else {
+        searchPath = env.appRootDirectory + File.separator + '.lib' + File.separator + 'jars';
+    }
+
+    var jarPath = searchPath + File.separator + jarName;
+
+    classLoadJar(jarPath);
+}
+
+function classLoadJar(jarPath) {
+    try {
+        var jarFile = new File(jarPath);
+
+        if (jarFile.exists()) {
+            var method = URLClassLoader.class.getDeclaredMethod('addURL', [URL.class]);
+
+            method.setAccessible(true);
+            method.invoke(ClassLoader.getSystemClassLoader(), [jarFile.toURI().toURL()]);
+        } else {
+            throw new Error('File not found')
+        }
+    } catch (e) {
+        throw new Error("[ERROR] Cannot load jar '" + jarPath + "': " + e.message)
     }
 }
 
@@ -221,7 +246,7 @@ function require(filename) {
         // TODO: Verificar problema com majesty e let
         var requireContext = new SimpleScriptContext()
         requireContext.setBindings(env.globalContext.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE)
-        
+
         result = env.engine.eval(moduleContent + '\nexports', requireContext)
 
         env.cacheScript[resolvedFile] = (env.config && env.config.cacheScript) ? result : undefined
@@ -283,7 +308,7 @@ function thrust(args) {
 
     env.globalContext = createGlobalContext(env);
 
-    loadRuntimeJars(env.libRootDirectory)
+    loadRuntimeJars(env)
     loadGlobalBitCodes(env);
 
     if (hasStartupFile) {
