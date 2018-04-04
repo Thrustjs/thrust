@@ -20,10 +20,6 @@ function getFileContent(fullPath) {
     return new JString(Files.readAllBytes(Paths.get(fullPath)))
 }
 
-function getThrustDir() {
-    return _thrustDir.getPath();
-}
-
 function loadRuntimeJars(env) {
     var jarLibDir = Paths.get(env.libRootDirectory, "jars").toFile()
 
@@ -152,7 +148,6 @@ function createGlobalContext(env) {
     globalContext.setAttribute('rootPath', env.appRootDirectory, ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('exports', {}, ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('dangerouslyLoadToGlobal', dangerouslyLoadToGlobal.bind(env), ScriptContext.ENGINE_SCOPE)
-    globalContext.setAttribute('getThrustDir', getThrustDir, ScriptContext.ENGINE_SCOPE)
 
     env.engine.eval(polyfills, globalContext);
 
@@ -270,6 +265,7 @@ function require(filename) {
 
 function thrust(args) {
     System.setProperty("nashorn.args", "--language=es6");
+    System.setProperty('thrust.dir', _thrustDir.getPath());
     load(_pollyFillsPath)
 
     var env = {}
@@ -298,6 +294,7 @@ function thrust(args) {
             .replace(/\.$|\\$|\/$/g, '');
 
     System.setProperty('user.dir', currDir);
+    
 
     env.libRootDirectory = env.appRootDirectory + '/.lib';
     env.bitcodesDirectory = env.appRootDirectory + '/.lib/bitcodes';

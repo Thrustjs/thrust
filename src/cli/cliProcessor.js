@@ -97,8 +97,9 @@ function processCommand (args) {
 
 function loadCliCommands () {
   var commands = [];
+  var thrustDir = java.lang.System.getProperty('thrust.dir');
 
-  Java.from(new File(getThrustDir(), 'cli/commands').listFiles()).forEach(function (file) {
+  Java.from(new File(thrustDir, 'cli/commands').listFiles()).forEach(function (file) {
     if (file.isFile() && file.getName().endsWith('.js')) {
       var requireFile = './commands/' + file.getName();
 

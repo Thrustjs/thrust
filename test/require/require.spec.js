@@ -18,6 +18,13 @@ exports = function exec(describe, it, beforeEach, afterEach, expect, should, ass
       });
     });
 
+    it('Deve ser possível exportar um objeto composto por dois requires', function () {
+      let value = require('./require/utilAppendExport.js');
+      expect(value).to.be.an('object');
+      expect(Object.keys(value)).to.contains.members(['func', 'outraFunc']);
+      //expect(value).to.have.own.property('func'); Porque não funciona usando own.property?
+    });
+
     it('Deve conseguir cachear um require', function () {
       let number = require('./require/utilCached.js').number;
       let secNumber = require('./require/utilCached.js').number;
