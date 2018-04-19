@@ -151,7 +151,15 @@ function createGlobalContext(env) {
 
     env.engine.eval(polyfills, globalContext);
 
-    return globalContext;
+    env.globalContext = globalContext;
+
+    var ConsoleColors = require.call(env, './util/consoleColors');
+
+    var thrustLog = buildThrustLog(ConsoleColors.make(ConsoleColors.COLORS.GREEN));
+    var thrustErrorLog = buildThrustLog(ConsoleColors.make(ConsoleColors.COLORS.RED));
+
+    globalContext.setAttribute('thrustLog', thrustLog, ScriptContext.ENGINE_SCOPE)
+    globalContext.setAttribute('thrustErrorLog', thrustErrorLog, ScriptContext.ENGINE_SCOPE)
 }
 
 function resolveWichScriptFileToRequire(env, fileName) {
@@ -263,6 +271,20 @@ function require(filename) {
     return result
 }
 
+function buildThrustLog (colorFn) {
+    return function () {
+      var args = Array.prototype.slice.call(arguments).map(function (arg) {
+        return (arg && arg.constructor && (arg.constructor.name === 'Array' || arg.constructor.name === 'Object'))
+          ? JSON.stringify(arg)
+          : arg
+      });
+  
+      args.unshift(colorFn('[thrust]'));
+  
+      print.apply(null, args);
+    }
+  }
+
 function thrust(args) {
     System.setProperty("nashorn.args", "--language=es6");
     System.setProperty('thrust.dir', _thrustDir.getPath());
@@ -295,7 +317,6 @@ function thrust(args) {
 
     System.setProperty('user.dir', currDir);
     
-
     env.libRootDirectory = env.appRootDirectory + '/.lib';
     env.bitcodesDirectory = env.appRootDirectory + '/.lib/bitcodes';
 
@@ -303,7 +324,7 @@ function thrust(args) {
         env.config = JSON.parse(getFileContent(currDir + '/config.json'));
     }
 
-    env.globalContext = createGlobalContext(env);
+    createGlobalContext(env);
 
     loadRuntimeJars(env)
     loadGlobalBitCodes(env);

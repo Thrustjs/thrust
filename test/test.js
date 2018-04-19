@@ -28,9 +28,11 @@ let res = majesty.run(function () {
   });
 })
 
-print(res.success.length, ' scenarios executed with success and')
-print(res.failure.length, ' scenarios executed with failure.\n')
+print(res.success.length, ' scenarios executed with success and');
+print(res.failure.length, ' scenarios executed with failure.\n');
 
 res.failure.forEach(function (fail) {
   print('[' + fail.scenario + '] =>', fail.execption)
-})
+});
+
+exit(res.failure.length);

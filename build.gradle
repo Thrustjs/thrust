@@ -1,0 +1,53 @@
+import groovy.json.JsonSlurper
+def packageSlurper = new JsonSlurper()
+def briefJson = packageSlurper.parse file('src/brief.json')
+
+version = briefJson.version
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:4.4.0'
+    }
+}
+
+apply plugin: 'nebula.ospackage'
+
+repositories {
+    mavenCentral()
+}
+
+ospackage {
+    os = LINUX
+    user = 'root'
+
+    into '/opt/thrust'
+
+    from('src') {
+        into 'lib'
+    }
+
+    from('scripts/thrust.sh') {
+    	into 'bin'
+        fileMode = 0755
+    }
+
+    link('/usr/local/bin/thrust', '/opt/thrust/bin/thrust.sh')
+}
+
+clean {
+    file('build').delete();
+}
+
+task test(type: Exec) {
+    workingDir './test'
+    //commandLine '../scripts/thrust-local.sh', 'install'
+    commandLine '../scripts/thrust-local.sh', 'test.js'
+}
+
+test.dependsOn clean
+build.dependsOn test
+build.finalizedBy buildRpm
+build.finalizedBy buildDeb

@@ -53,10 +53,12 @@ function runUpdate (runInfo) {
       return;
     }
 
-    var distDir = _thrustDir; // new File(_thrustDir, '../thrust-download');
-    var backupDir = new File(_thrustDir, '../thrust-bkp');
+    var thrustDir = java.lang.System.getProperty('thrust.dir');
 
-    FileUtils.copyDirectory(_thrustDir, backupDir);
+    var distDir = new File(thrustDir, '../thrust-download');
+    var backupDir = new File(thrustDir, '../thrust-bkp');
+
+    FileUtils.copyDirectory(thrustDir, backupDir);
     FileUtils.copyDirectory(downloadedThrustSrc, distDir);
 
     thrustLog('Version successfully updated to:', downloadedBriefJson.version);
@@ -67,7 +69,7 @@ function runUpdate (runInfo) {
 }
 
 function getCurrentVersionBrief () {
-  var briefJsonFile = new File(_thrustDir.getPath(), 'brief.json')
+  var briefJsonFile = new File(new File(java.lang.System.getProperty('thrust.dir')).getPath(), 'brief.json')
 
   if (!briefJsonFile.exists()) {
     throw new Error("This isn't a thrust app, 'brief.json' not found.")

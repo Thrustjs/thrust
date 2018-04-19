@@ -1,0 +1,8 @@
+{
+  "description": "Rich JavaScript test framework",
+  "name": "majesty",
+  "path": "dist",
+  "version": "0.1.3",
+  "author": "Nery Jr",
+  "dependencies": {}
+}
