@@ -1,4 +1,4 @@
-Thrust v0.4.0
+Thrust [![Build Status](https://travis-ci.org/Thrustjs/thrust.svg?branch=master)](https://travis-ci.org/Thrustjs/thrust)
 ===============
 
 O *thrust* (ou *thrustjs*) é uma plataforma de execução/interpretação JavaScript, ou seja, é um Server-side JavaScript (SSJS). Ele permite a escrita de código em JavaScript a ser executado sobre a Java Virtual Machine (JVM).
