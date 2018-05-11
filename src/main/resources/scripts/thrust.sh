@@ -17,3 +17,4 @@ fi
 
 # Running app
 eval "$JAVA" -jar /opt/thrust/lib/thrust.jar $*
+exit $?
