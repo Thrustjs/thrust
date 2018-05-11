@@ -49,7 +49,7 @@ jar {
 }
 
 ospackage {
-    version = '0.4.0'
+    version = '0.4.1'
     release = '1'
     os = LINUX
     user = 'root'
@@ -69,3 +69,5 @@ ospackage {
     link('/usr/local/bin/thrust', '/opt/thrust/bin/thrust.sh')
 }
 
+build.finalizedBy buildRpm
+build.finalizedBy buildDeb
