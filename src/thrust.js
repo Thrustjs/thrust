@@ -5,6 +5,7 @@ var JString = Java.type('java.lang.String')
 var Paths = Java.type('java.nio.file.Paths')
 var StandardCharsets = Java.type('java.nio.charset.StandardCharsets')
 var ScriptContext = Java.type('javax.script.ScriptContext')
+var ScriptEngine = Java.type('javax.script.ScriptEngine')
 var ScriptEngineManager = Java.type('javax.script.ScriptEngineManager')
 var SimpleBindings = Java.type('javax.script.SimpleBindings')
 var SimpleScriptContext = Java.type('javax.script.SimpleScriptContext')
@@ -105,20 +106,6 @@ function dangerouslyLoadToGlobal(env, name, obj) {
 
 function getConfig(env) {
     return Object.assign({}, env.config)
-}
-
-function getBitcodeConfig(env, bitcode) {
-    var path = env.appRootDirectory + '/config.json'
-    var configFile = Paths.get(path).toFile()
-
-    if (configFile.exists()) {
-        var moduleContent = getFileContent(path)
-        var config = JSON.parse(moduleContent)
-
-        return config[bitcode]
-    }
-
-    return {}
 }
 
 function injectMonitoring(fncMonitoring) {
@@ -247,12 +234,12 @@ function require(filename) {
 
     try {
         // TODO: Verificar problema com majesty e let
-        var requireContext = new SimpleScriptContext()
-        requireContext.setBindings(env.globalContext.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE)
+        var requireContext = new SimpleScriptContext();
+        requireContext.setAttribute(ScriptEngine.FILENAME, resolvedFile, ScriptContext.ENGINE_SCOPE);
+        requireContext.setBindings(env.globalContext.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE);
 
-        result = env.engine.eval(moduleContent + '\nexports', requireContext)
-
-        env.cacheScript[resolvedFile] = (env.config && env.config.cacheScript) ? result : undefined
+        env.engine.eval('exports={};\n' + moduleContent, requireContext);
+        result = env.engine.eval('exports', requireContext)
     } finally {
         env.requireCurrentDirectory = reqCurDirBak
     }
@@ -268,22 +255,68 @@ function require(filename) {
         })
     }
 
-    return result
+    env.cacheScript[resolvedFile] = (env.config && env.config.cacheScript) ? result : undefined;
+
+    return result;
 }
 
-function buildThrustLog (colorFn) {
-    return function () {
-      var args = Array.prototype.slice.call(arguments).map(function (arg) {
-        return (arg && arg.constructor && (arg.constructor.name === 'Array' || arg.constructor.name === 'Object'))
-          ? JSON.stringify(arg)
-          : arg
-      });
-  
-      args.unshift(colorFn('[thrust]'));
-  
-      print.apply(null, args);
+
+/**
+* Usado para pegar um getter de configuração
+* O getter tem a assinatura (property:String,appId:String).
+* É possível passar como 'property' um path do JSON, que
+* irá navegar no mesmo e buscar uma configuração.
+*
+* Caso seja passado um appId como parâmetro, então
+* o getter tentará buscar uma configuração com 'property'
+* e adicionará o appId como ultimo parâmetro para tentar
+* achar uma configuração específica deste app, se não encontrar,
+* retorna apenas o valor do 'property', que representa o global
+* para todas as possíveis aplicações.
+*
+*
+* @returns {function} Usado para pegar configurações
+*
+* @code let dbConfig = getBitcodeConfig('database')
+* @code dbConfig('path.de.uma.config')
+* @code dbConfig('path.de.uma.config', 'MeuApp')
+*/
+function getBitcodeConfig(env, bitcode) {
+    var config = getConfig(env)[bitcode] || {}
+
+    return function (property, appId) {
+        var propertyPath = property ? property.split('.') : []
+
+        var result = propertyPath.reduce(function (map, currProp) {
+            if (map && map[currProp]) {
+                return map[currProp]
+            } else {
+                return undefined
+            }
+
+        }, config)
+
+        if (appId && typeof result === 'object' && result[appId]) {
+            result = result[appId]
+        }
+
+        return result;
     }
-  }
+}
+
+function buildThrustLog(colorFn) {
+    return function () {
+        var args = Array.prototype.slice.call(arguments).map(function (arg) {
+            return (arg && arg.constructor && (arg.constructor.name === 'Array' || arg.constructor.name === 'Object'))
+                ? JSON.stringify(arg)
+                : arg
+        });
+
+        args.unshift(colorFn('[thrust]'));
+
+        print.apply(null, args);
+    }
+}
 
 function thrust(args) {
     System.setProperty("nashorn.args", "--language=es6");
@@ -316,7 +349,7 @@ function thrust(args) {
             .replace(/\.$|\\$|\/$/g, '');
 
     System.setProperty('user.dir', currDir);
-    
+
     env.libRootDirectory = env.appRootDirectory + '/.lib';
     env.bitcodesDirectory = env.appRootDirectory + '/.lib/bitcodes';
 
