@@ -1,7 +1,7 @@
 var ConsoleColors = require('../../util/consoleColors');
 
 function cliVersion (runInfo) {
-  let greenColor = ConsoleColors.make(ConsoleColors.COLORS.GREEN);
+  var greenColor = ConsoleColors.make(ConsoleColors.COLORS.GREEN);
   print(greenColor('v') + require('./brief.json').version);
 }
 

@@ -1,7 +1,7 @@
 var majesty = require('majesty');
 var Paths = Java.type('java.nio.file.Paths');
 
-let testFiles = collectTestFiles(Paths.get(rootPath).toFile());
+var testFiles = collectTestFiles(Paths.get(rootPath).toFile());
 
 function collectTestFiles (baseDir) {
   var testFiles = [];
@@ -19,7 +19,7 @@ function collectTestFiles (baseDir) {
   return testFiles;
 }
 
-let res = majesty.run(function () {
+var res = majesty.run(function () {
   var testArgs = arguments;
   var ctx = this;
 

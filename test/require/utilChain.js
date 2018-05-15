@@ -1,3 +1,3 @@
-let a = 1;
+var a = 1;
 
 exports = require('./utilChain2');

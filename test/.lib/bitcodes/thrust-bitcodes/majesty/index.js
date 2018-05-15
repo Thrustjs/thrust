@@ -1,12 +1,12 @@
-const ANSI_RESET = '\u001B[0m'
-const ANSI_RED = '\u001B[31m'
-const ANSI_GREEN = '\u001B[32m'
-const ANSI_BLUE = '\u001B[34m'
-const ANSI_CYAN = '\u001B[36m'
-const ANSI_WHITE = '\u001B[37m'
-const ANSI_DARK_GREY = '\u001B[90m'
-const ANSI_LIGHT_RED = '\u001B[91m'
-const ANSI_LIGHT_BLUE = '\u001B[94m'
+var ANSI_RESET = '\u001B[0m'
+var ANSI_RED = '\u001B[31m'
+var ANSI_GREEN = '\u001B[32m'
+var ANSI_BLUE = '\u001B[34m'
+var ANSI_CYAN = '\u001B[36m'
+var ANSI_WHITE = '\u001B[37m'
+var ANSI_DARK_GREY = '\u001B[90m'
+var ANSI_LIGHT_RED = '\u001B[91m'
+var ANSI_LIGHT_BLUE = '\u001B[94m'
 
 var chai = require('./chai').chai
 // print("chai => ", JSON.stringify( Object.getOwnPropertyNames(chai) ))
@@ -39,12 +39,12 @@ var majesty = {
       print(ANSI_WHITE, Array(suite.level + 1).join('    '), suite.description, ANSI_RESET)
     },
     endOfSuite: function(suite) {
-      let result = (suite.passed) ? ANSI_GREEN + '[success]' + ANSI_DARK_GREY + '!' : ANSI_LIGHT_RED + 'error' + ANSI_DARK_GREY + '.'
+      var result = (suite.passed) ? ANSI_GREEN + '[success]' + ANSI_DARK_GREY + '!' : ANSI_LIGHT_RED + 'error' + ANSI_DARK_GREY + '.'
 
       print(ANSI_DARK_GREY, Array(suite.level + 1).join('    '), 'Finished with', result, ANSI_RESET)
     },
     scenarioExecuted: function(scenario) {
-      let result = '' + ANSI_WHITE + '[' + ((scenario.passed) ? ANSI_GREEN + 'OK' : ANSI_LIGHT_RED + 'NO') + ANSI_WHITE + ']' + ANSI_RESET
+      var result = '' + ANSI_WHITE + '[' + ((scenario.passed) ? ANSI_GREEN + 'OK' : ANSI_LIGHT_RED + 'NO') + ANSI_WHITE + ']' + ANSI_RESET
 
       print(Array(scenario.level + 1).join('    '), result, ANSI_WHITE + scenario.description, ANSI_RESET)
     }
@@ -82,10 +82,10 @@ function createScenario(desc, func, level) {
 }
 
 function determineParentSuite(desc) {
-  let lastSuite = majesty.suites.slice(-1).pop()
+  var lastSuite = majesty.suites.slice(-1).pop()
 
   if (lastSuite !== undefined && lastSuite.isOpen) {
-    let lastChild = lastSuite.children.slice(-1).pop()
+    var lastChild = lastSuite.children.slice(-1).pop()
 
     if (lastChild && lastChild.isOpen) { return lastChild }
     else { return lastSuite }
@@ -95,9 +95,9 @@ function determineParentSuite(desc) {
 }
 
 function describe(description, specFunc) {
-  let parent = determineParentSuite()
-  let queue = (parent) ? parent.children : majesty.suites
-  let suite = createSuite(description, (parent) ? parent.level + 1 : 0)
+  var parent = determineParentSuite()
+  var queue = (parent) ? parent.children : majesty.suites
+  var suite = createSuite(description, (parent) ? parent.level + 1 : 0)
 
   queue.push(suite)
   specFunc()
@@ -105,20 +105,20 @@ function describe(description, specFunc) {
 }
 
 function it(description, scenarioFunc) {
-  let suite = determineParentSuite()
-  let scenario = createScenario(description, scenarioFunc, suite.level + 1)
+  var suite = determineParentSuite()
+  var scenario = createScenario(description, scenarioFunc, suite.level + 1)
 
   suite.scenarios.push(scenario)
 }
 
 function beforeEach(beforeFunc) {
-  let suite = determineParentSuite();
+  var suite = determineParentSuite();
 
   ((suite) || this).beforeEachFnc = beforeFunc
 }
 
 function afterEach(afterFunc) {
-  let suite = determineParentSuite();
+  var suite = determineParentSuite();
 
   ((suite) || this).afterEachFnc = afterFunc
 }

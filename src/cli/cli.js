@@ -1,7 +1,7 @@
 var cliProcessor = require('./cliProcessor');
 
 function runCLI (args) {
-  let commandInfo = processCLI(args);
+  var commandInfo = processCLI(args);
   commandInfo.command.runner(commandInfo.argsMD, commandInfo.allCommands);
 }
 

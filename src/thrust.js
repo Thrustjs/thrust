@@ -233,7 +233,7 @@ function require(filename) {
     env.requireCurrentDirectory = new File(resolvedFile).getAbsoluteFile().getParent().replace(/\.$/, '')
 
     try {
-        // TODO: Verificar problema com majesty e let
+        // TODO: Verificar problema com majesty
         var requireContext = new SimpleScriptContext();
         requireContext.setAttribute(ScriptEngine.FILENAME, resolvedFile, ScriptContext.ENGINE_SCOPE);
         requireContext.setBindings(env.globalContext.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE);
@@ -277,7 +277,7 @@ function require(filename) {
 *
 * @returns {function} Usado para pegar configurações
 *
-* @code let dbConfig = getBitcodeConfig('database')
+* @code var dbConfig = getBitcodeConfig('database')
 * @code dbConfig('path.de.uma.config')
 * @code dbConfig('path.de.uma.config', 'MeuApp')
 */
@@ -319,12 +319,11 @@ function buildThrustLog(colorFn) {
 }
 
 function thrust(args) {
-    System.setProperty("nashorn.args", "--language=es6");
     System.setProperty('thrust.dir', _thrustDir.getPath());
+    
     load(_pollyFillsPath)
 
     var env = {}
-    var __thrust__env__ = env
     var currDir = ''
 
     env.engine = new ScriptEngineManager().getEngineByName("nashorn")

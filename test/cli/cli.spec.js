@@ -1,10 +1,10 @@
 exports = function exec (describe, it, beforeEach, afterEach, expect, should, assert) {
-  let cli = require('../src/cli/cli').processCLI;
+  var cli = require('../src/cli/cli').processCLI;
 
   describe('Teste do processador de CLI', function () {
     describe('init', function () {
       it('init simples', function () {
-        let commandInfo = cli('init');
+        var commandInfo = cli('init');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
@@ -16,7 +16,7 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
       });
 
       it('init path, template e force', function () {
-        let commandInfo = cli('init teste -f -t owner/repo');
+        var commandInfo = cli('init teste -f -t owner/repo');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
@@ -30,7 +30,7 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
 
     describe('install', function () {
       it('install sem argumentos', function () {
-        let commandInfo = cli('install');
+        var commandInfo = cli('install');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
@@ -40,7 +40,7 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
       });
 
       it('install com argumento', function () {
-        let commandInfo = cli('install database');
+        var commandInfo = cli('install database');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
@@ -52,7 +52,7 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
 
     describe('update', function () {
       it('update', function () {
-        let commandInfo = cli('update');
+        var commandInfo = cli('update');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
@@ -62,7 +62,7 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
       });
 
       it('update com versão', function () {
-        let commandInfo = cli('update 5.0');
+        var commandInfo = cli('update 5.0');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
@@ -74,7 +74,7 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
 
     describe('help', function () {
       it('help', function () {
-        let commandInfo = cli('help');
+        var commandInfo = cli('help');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
@@ -83,7 +83,7 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
       });
 
       it('help com -h', function () {
-        let commandInfo = cli('-h');
+        var commandInfo = cli('-h');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
@@ -92,7 +92,7 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
       });
 
       it('help de um comando', function () {
-        let commandInfo = cli('init -h');
+        var commandInfo = cli('init -h');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
@@ -102,7 +102,7 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
       });
 
       it('help default', function () {
-        let commandInfo = cli('');
+        var commandInfo = cli('');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
@@ -111,7 +111,7 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
       });
 
       it('help comando que não existe', function () {
-        let commandInfo = cli('comandoquenaoexistenocli');
+        var commandInfo = cli('comandoquenaoexistenocli');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
@@ -122,7 +122,7 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
 
     describe('version', function () {
       it('version', function () {
-        let commandInfo = cli('version');
+        var commandInfo = cli('version');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
@@ -131,7 +131,7 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
       });
 
       it('version com -v', function () {
-        let commandInfo = cli('-v');
+        var commandInfo = cli('-v');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({

@@ -24,7 +24,7 @@ function wrap (wrap, text) {
 }
 
 function make () {
-  let colors = Array.prototype.slice.call(arguments)
+  var colors = Array.prototype.slice.call(arguments)
 
   return function (text) {
     return wrap(colors.join(''), text)

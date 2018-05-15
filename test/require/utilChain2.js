@@ -1,4 +1,4 @@
-let a = 2;
+var a = 2;
 
 exports = function () {
   return 'value';

@@ -44,7 +44,7 @@ function forceDelete (file) {
   if (file.isDirectory()) {
     deleteDirectory(file);
   } else {
-    let filePresent = file.exists();
+    var filePresent = file.exists();
 
     if (!file.delete()) {
       if (!filePresent) {
@@ -111,12 +111,12 @@ function write (file, str, encoding) {
   }
 
   if (str != null) {
-    let out = null;
+    var out = null;
 
     try {
       out = openOutputStream(file, false);
 
-      let bytes = new JString(str).getBytes();
+      var bytes = new JString(str).getBytes();
 
       out.write(new JString(bytes, Charsets.forName(encoding || 'UTF-8')).getBytes());
       out.flush();
@@ -158,7 +158,7 @@ function copyFile (srcFile, destFile, preserveFileDate) {
     throw new Error("Source '" + srcFile + "' and destination '" + destFile + "' are the same");
   }
 
-  let parentFile = destFile.getParentFile();
+  var parentFile = destFile.getParentFile();
 
   if (parentFile != null) {
     if (!parentFile.mkdirs() && !parentFile.isDirectory()) {
@@ -177,10 +177,10 @@ function doCopyFile (srcFile, destFile, preserveFileDate) {
     throw new Error("Destination '" + destFile + "' exists but is a directory");
   }
 
-  let fis;
-  let input;
-  let fos;
-  let output;
+  var fis;
+  var input;
+  var fos;
+  var output;
 
   try {
     fis = new FileInputStream(srcFile);
@@ -188,14 +188,14 @@ function doCopyFile (srcFile, destFile, preserveFileDate) {
     fos = new FileOutputStream(destFile);
     output = fos.getChannel()
 
-    let size = input.size(); // TODO See IO-386
-    let pos = 0;
-    let count = 0;
+    var size = input.size(); // TODO See IO-386
+    var pos = 0;
+    var count = 0;
     while (pos < size) {
-      let remain = size - pos;
+      var remain = size - pos;
       count = remain > FILE_COPY_BUFFER_SIZE ? FILE_COPY_BUFFER_SIZE : remain;
 
-      let bytesCopied = output.transferFrom(input, pos, count);
+      var bytesCopied = output.transferFrom(input, pos, count);
 
       if (bytesCopied === 0) { // IO-385 - can happen if file is truncated after caching the size
         break; // ensure we don't loop forever
@@ -208,8 +208,8 @@ function doCopyFile (srcFile, destFile, preserveFileDate) {
     close(fos);
   }
 
-  let srcLen = Number(srcFile.length()); // TODO See IO-386
-  let dstLen = Number(destFile.length()); // TODO See IO-386
+  var srcLen = Number(srcFile.length()); // TODO See IO-386
+  var dstLen = Number(destFile.length()); // TODO See IO-386
 
   if (srcLen !== dstLen) {
     throw new Error("Failed to copy full contents from '" +
@@ -242,7 +242,7 @@ function copyURLToFile (url, destination) {
     throw new Error("Destination '" + destination + "' cannot be written to");
   }
 
-  let is;
+  var is;
 
   try {
     is = url.openStream()
@@ -268,7 +268,7 @@ function copyDirectory (srcDir, destDir) {
 
 function doCopyDirectory (srcDir, destDir) {
   // recurse
-  let srcFiles = srcDir.listFiles();
+  var srcFiles = srcDir.listFiles();
 
   if (srcFiles == null) { // null if abstract pathname does not denote a directory, or if an I/O error occurs
     throw new Error('Failed to list contents of ' + srcDir);

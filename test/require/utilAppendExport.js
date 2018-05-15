@@ -4,4 +4,4 @@ exports = {
     }
 };
 
-exports.outraFunc = require('./utilFn');
+exports.outroDado = require('./utilEcho');
