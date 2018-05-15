@@ -238,8 +238,7 @@ function require(filename) {
         requireContext.setAttribute(ScriptEngine.FILENAME, resolvedFile, ScriptContext.ENGINE_SCOPE);
         requireContext.setBindings(env.globalContext.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE);
 
-        env.engine.eval('exports={};\n' + moduleContent, requireContext);
-        result = env.engine.eval('exports', requireContext)
+        result = env.engine.eval(moduleContent + '\nexports', requireContext)
     } finally {
         env.requireCurrentDirectory = reqCurDirBak
     }
