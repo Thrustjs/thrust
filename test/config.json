@@ -3,5 +3,9 @@
 	"loadToGlobal": [
 		"thrust-bitcodes/globalBitCode1",
 		"globalBitCode2"
-	]
+	],
+	"logger": {
+		"level": "config",
+		"format": "[testDefault][type][name] message throwable lineBreak"
+	}
 }

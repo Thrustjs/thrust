@@ -1,16 +1,19 @@
 var File = Java.type('java.io.File');
 var Files = Java.type('java.nio.file.Files');
+var InputStream = Java.type('java.io.InputStream');
+var BufferedReader = Java.type('java.io.BufferedReader');
 var FileOutputStream = Java.type('java.io.FileOutputStream');
 var FileInputStream = Java.type('java.io.FileInputStream');
 var Charsets = Java.type('java.nio.charset.Charset');
 var StandardCharsets = Java.type('java.nio.charset.StandardCharsets');
 var JString = Java.type('java.lang.String');
+var Paths = Java.type('java.nio.file.Paths')
 
 var ONE_KB = 1024;
 var ONE_MB = ONE_KB * ONE_KB;
 var FILE_COPY_BUFFER_SIZE = ONE_MB * 30;
 
-function cleanDirectory (directory) {
+function cleanDirectory(directory) {
   if (typeof directory === 'string') {
     directory = new File(directory);
   }
@@ -22,7 +25,7 @@ function cleanDirectory (directory) {
   });
 }
 
-function verifiedListFiles (directory) {
+function verifiedListFiles(directory) {
   if (!directory.exists()) {
     throw new Error(directory + ' does not exist');
   }
@@ -40,7 +43,7 @@ function verifiedListFiles (directory) {
   return Java.from(files);
 }
 
-function forceDelete (file) {
+function forceDelete(file) {
   if (file.isDirectory()) {
     deleteDirectory(file);
   } else {
@@ -56,7 +59,7 @@ function forceDelete (file) {
   }
 }
 
-function deleteDirectory (directory) {
+function deleteDirectory(directory) {
   if (typeof directory === 'string') {
     directory = new File(directory);
   }
@@ -74,7 +77,7 @@ function deleteDirectory (directory) {
   }
 }
 
-function isSymlink (file) {
+function isSymlink(file) {
   if (file == null) {
     throw new Error('File must not be null');
   }
@@ -82,7 +85,7 @@ function isSymlink (file) {
   return Files.isSymbolicLink(file.toPath());
 }
 
-function deleteQuietly (file) {
+function deleteQuietly(file) {
   if (file == null) {
     return false;
   }
@@ -105,7 +108,7 @@ function deleteQuietly (file) {
   }
 }
 
-function write (file, str, encoding) {
+function write(file, str, encoding) {
   if (typeof file === 'string') {
     file = new File(file);
   }
@@ -126,7 +129,7 @@ function write (file, str, encoding) {
   }
 }
 
-function openOutputStream (file, append) {
+function openOutputStream(file, append) {
   if (file.exists()) {
     if (file.isDirectory()) {
       throw new Error("File '" + file + "' exists but is a directory");
@@ -147,7 +150,7 @@ function openOutputStream (file, append) {
   return new FileOutputStream(file, append);
 }
 
-function copyFile (srcFile, destFile, preserveFileDate) {
+function copyFile(srcFile, destFile, preserveFileDate) {
   checkFileRequirements(srcFile, destFile);
 
   if (srcFile.isDirectory()) {
@@ -172,7 +175,7 @@ function copyFile (srcFile, destFile, preserveFileDate) {
   doCopyFile(srcFile, destFile, preserveFileDate);
 }
 
-function doCopyFile (srcFile, destFile, preserveFileDate) {
+function doCopyFile(srcFile, destFile, preserveFileDate) {
   if (destFile.exists() && destFile.isDirectory()) {
     throw new Error("Destination '" + destFile + "' exists but is a directory");
   }
@@ -213,7 +216,7 @@ function doCopyFile (srcFile, destFile, preserveFileDate) {
 
   if (srcLen !== dstLen) {
     throw new Error("Failed to copy full contents from '" +
-            srcFile + "' to '" + destFile + "' Expected length: " + srcLen + ' Actual: ' + dstLen);
+      srcFile + "' to '" + destFile + "' Expected length: " + srcLen + ' Actual: ' + dstLen);
   }
 
   if (preserveFileDate) {
@@ -221,7 +224,7 @@ function doCopyFile (srcFile, destFile, preserveFileDate) {
   }
 }
 
-function checkFileRequirements (src, dest) {
+function checkFileRequirements(src, dest) {
   if (src == null) {
     throw new Error('Source must not be null');
   }
@@ -233,7 +236,7 @@ function checkFileRequirements (src, dest) {
   }
 }
 
-function copyURLToFile (url, destination) {
+function copyURLToFile(url, destination) {
   if (!destination.exists() && !destination.mkdirs()) {
     throw new Error("Destination '" + destination + "' directory cannot be created");
   }
@@ -252,7 +255,7 @@ function copyURLToFile (url, destination) {
   }
 }
 
-function copyDirectory (srcDir, destDir) {
+function copyDirectory(srcDir, destDir) {
   checkFileRequirements(srcDir, destDir);
 
   if (!srcDir.isDirectory()) {
@@ -266,7 +269,7 @@ function copyDirectory (srcDir, destDir) {
   doCopyDirectory(srcDir, destDir);
 }
 
-function doCopyDirectory (srcDir, destDir) {
+function doCopyDirectory(srcDir, destDir) {
   // recurse
   var srcFiles = srcDir.listFiles();
 
@@ -298,7 +301,78 @@ function doCopyDirectory (srcDir, destDir) {
   });
 }
 
-function close (closeable) {
+
+/**
+ * @desc Lê o conteúdo do arquivo *filePathName* e retorna em uma string.
+ * @param {string} filePathName - caminho absoluto ou relativo do arquivo a ser lido e ter o seu conteúdo retornado.
+ * @param {java.nio.charset.Charset} charset - o *charset* as ser usado para decodificação (default é UTF_8)
+ * @returns {string} - o conteúdo do arquivo.
+ * @throws Irá gerar uma exceção caso ocorra algum problema ao ler o arquivo.
+ */
+function readAll(filePathName, charSet) {
+  var content = null
+  var cs = charSet || StandardCharsets.UTF_8
+
+  try {
+    content = new java.lang.String(Files.readAllBytes(Paths.get(filePathName)), cs)
+  } catch (e) {
+    // print('Error: ' + e.message);
+    throw new Error('Unable to read file at: ' + filePathName + ', ' + e)
+  }
+  return content
+}
+
+/**
+ * @desc Lê o conteúdo do arquivo *filePathName* em formato JSON e retorna o objeto.
+ * @param {string} filePathName - caminho absoluto ou relativo do arquivo a ser lido e ter o seu conteúdo retornado.
+ * @param {java.nio.charset.Charset} charset - o *charset* as ser usado para decodificação (default é UTF_8)
+ * @returns {string} - o conteúdo do arquivo.
+ * @throws Irá gerar uma exceção caso ocorra algum problema ao ler o arquivo.
+ */
+function readJson(filePathName, charSet) {
+  return JSON.parse(readAll(filePathName, charSet));
+}
+
+/**
+   * @desc Verifica se o arquivo *filePathName* existe.
+   * @param {string} filePathName - caminho absoluto ou relativo do arquivo que se deseja verificar a existência.
+   * @returns {boolean} - *true* if the file exists; *false* if the file does not exist or its existence cannot be determined.
+   */
+function exists(filePathName) {
+  return Files.exists(Paths.get(filePathName), java.nio.file.LinkOption.NOFOLLOW_LINKS)
+}
+
+/**
+   * @desc Read all lines from a file as a Stream. Unlike readAllLines, this method does not read
+   *       all lines into a List, but instead populates lazily as the stream is consumed.
+   * @param {string} fileObject - caminho absoluto ou relativo do arquivo a ser lido e ter o seu conteúdo retornado.
+   * @param {java.nio.charset.Charset} charset - o *charset* as ser usado para decodificação (default é UTF_8)
+   * @returns {java.util.stream.Stream<String>} - the lines from the file as a Stream.
+   */
+function lines(fileObject, charSet) {
+  var cs = charSet || StandardCharsets.UTF_8
+
+  if (typeof (fileObject) === "string") {
+    return Files.lines(Paths.get(fileObject), cs)
+  }
+
+  var is_java_io_File = fileObject.class.getCanonicalName() === "java.io.File"
+  if (fileObject.class || is_java_io_File) {
+    return Files.lines(fileObject.toPath(), cs)
+  }
+
+  var is_java_io_InputStream = fileObject.class.getInterfaces()
+    .find(function (item) {
+      return item.getCanonicalName() === "java.io.InputStream"
+    }) !== undefined
+  if (fileObject.class || is_java_io_InputStream) {
+    return new BufferedReader(new InputStreamReader(inputStream, cs)).lines()
+  }
+
+  throw 'fileObject type is not valid on fs.lines function!'
+}
+
+function close(closeable) {
   if (closeable) {
     try {
       closeable.close();
@@ -314,5 +388,9 @@ exports = {
   write: write,
   copyFile: copyFile,
   copyURLToFile: copyURLToFile,
-  copyDirectory: copyDirectory
+  copyDirectory: copyDirectory,
+  readAll: readAll,
+  exists: exists,
+  lines: lines,
+  readJson: readJson
 };

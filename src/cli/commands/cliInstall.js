@@ -3,7 +3,7 @@ var Files = Java.type('java.nio.file.Files')
 var Paths = Java.type('java.nio.file.Paths')
 var URL = Java.type('java.net.URL')
 
-var FileUtils = require('../../util/fileUtils')
+var FileUtils = require('fs')
 var repoDownloder = require('../../util/repoDownloader')
 var Utils = require('../../util/util')
 var Constants = require('../../util/constants');

@@ -1,10 +1,11 @@
 var File = Java.type('java.io.File')
 var Files = Java.type('java.nio.file.Files')
 
-var FileUtils = require('../../util/fileUtils')
+var FileUtils = require('fs')
 var repoDownloder = require('../../util/repoDownloader');
 var Utils = require('../../util/util');
 var Constants = require('../../util/constants');
+var cliInstall = require('./cliInstall.js');
 
 function runInit (runInfo) {
   var installDir = runInfo.args.path
@@ -74,9 +75,7 @@ function runInit (runInfo) {
     FileUtils.write(new File(installDir, 'brief.json'), JSON.stringify(projectBrief, null, 2));
 
     if (projectBrief.dependencies) {
-      var installer = require('./cli/cliInstall')
-
-      installer.run({
+      cliInstall.runner({
         args: {
           basePath: installDir
         }

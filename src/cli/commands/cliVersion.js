@@ -1,4 +1,4 @@
-var ConsoleColors = require('../../util/consoleColors');
+var ConsoleColors = require('console-colors');
 
 function cliVersion (runInfo) {
   var greenColor = ConsoleColors.make(ConsoleColors.COLORS.GREEN);

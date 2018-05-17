@@ -14,8 +14,11 @@ var URL = Java.type("java.net.URL")
 var URLClassLoader = Java.type("java.net.URLClassLoader")
 
 var _thrustDir = new File(__DIR__);
+var _engine;
 var _self = this;
 var _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js';
+
+var console;
 
 function getFileContent(fullPath) {
     return new JString(Files.readAllBytes(Paths.get(fullPath)))
@@ -25,11 +28,23 @@ function loadRuntimeJars(env) {
     var jarLibDir = Paths.get(env.libRootDirectory, "jars").toFile()
 
     if (jarLibDir.exists()) {
-        Java.from(jarLibDir.listFiles()).forEach(function (libFile) {
-            if (libFile.isFile()) {
-                loadJar.call(env, libFile.getName())
-            }
-        })
+        var jarLibFileNames = Java.from(jarLibDir.listFiles()).filter(function (file) {
+            return file.isFile();
+        }).map(function (file) {
+            return file.getName();
+        });
+
+        if (jarLibFileNames.length) {
+            console.config('+ Loading runtime jars:');
+
+            jarLibFileNames.forEach(function (libFileName) {
+                console.config('| - ' + libFileName);
+
+                loadJar.call(env, libFileName);
+            });
+
+            console.config('+ finished.');
+        }
     }
 }
 
@@ -49,12 +64,18 @@ function loadGlobalBitCodes(env) {
             throw new Error('loadToGlobal property must be a string or an array.');
         }
 
+        console.config('+ Loading global bitcodes:');
+
         bitList.forEach(function (bitCodeName) {
+            console.config('| - ' + bitCodeName);
+
             var firstIndexToSearch = bitCodeName.lastIndexOf('/') > -1 ? bitCodeName.lastIndexOf('/') + 1 : 0;
             var bitCodeExportName = bitCodeName.substring(firstIndexToSearch, bitCodeName.length());
 
             dangerouslyLoadToGlobal(env, bitCodeExportName, require.call(env, bitCodeName));
-        })
+        });
+
+        console.config('+ finished.');
     }
 }
 
@@ -103,7 +124,6 @@ function dangerouslyLoadToGlobal(env, name, obj) {
     env.globalContext.setAttribute(name, obj, ScriptContext.ENGINE_SCOPE)
 }
 
-
 function getConfig(env) {
     return Object.assign({}, env.config)
 }
@@ -127,7 +147,6 @@ function createGlobalContext(env) {
     var globalContext = new SimpleScriptContext();
     var polyfills = getFileContent(_pollyFillsPath);
 
-    globalContext.setAttribute('console', console, ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('loadJar', loadJar, ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('getConfig', getConfig.bind(null, env), ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('getBitcodeConfig', getBitcodeConfig.bind(null, env), ScriptContext.ENGINE_SCOPE)
@@ -140,13 +159,23 @@ function createGlobalContext(env) {
 
     env.globalContext = globalContext;
 
-    var ConsoleColors = require.call(env, './util/consoleColors');
+    var ConsoleColors = require.call(env, 'console-colors');
+    var logger = require.call(env, 'logger');
 
-    var thrustLog = buildThrustLog(ConsoleColors.make(ConsoleColors.COLORS.GREEN));
-    var thrustErrorLog = buildThrustLog(ConsoleColors.make(ConsoleColors.COLORS.RED));
+    var appLogger = logger(undefined, env.config && env.config.logger);
 
-    globalContext.setAttribute('thrustLog', thrustLog, ScriptContext.ENGINE_SCOPE)
-    globalContext.setAttribute('thrustErrorLog', thrustErrorLog, ScriptContext.ENGINE_SCOPE)
+    console = {
+        error: appLogger.severe,
+        warn: appLogger.warning,
+        log: appLogger.info,
+        config: appLogger.config,
+        fine: appLogger.fine,
+        finer: appLogger.finer,
+        finest: appLogger.finest
+    };
+
+    globalContext.setAttribute('appLogger', appLogger, ScriptContext.ENGINE_SCOPE)
+    globalContext.setAttribute('console', console, ScriptContext.ENGINE_SCOPE)
 }
 
 function resolveWichScriptFileToRequire(env, fileName) {
@@ -183,6 +212,8 @@ function resolveWichScriptFileToRequire(env, fileName) {
             if (env.appRootDirectory) {
                 possiblePaths.push(env.appRootDirectory + File.separator + '.lib' + File.separator + 'bitcodes');
             }
+
+            possiblePaths.push(_thrustDir.getPath());
 
             possiblePaths.push(_thrustDir.getPath() + File.separator + '.lib' + File.separator + 'bitcodes');
         }
@@ -235,10 +266,10 @@ function require(filename) {
     try {
         // TODO: Verificar problema com majesty
         var requireContext = new SimpleScriptContext();
-        requireContext.setAttribute(ScriptEngine.FILENAME, resolvedFile, ScriptContext.ENGINE_SCOPE);
         requireContext.setBindings(env.globalContext.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE);
-
-        result = env.engine.eval(moduleContent + '\nexports', requireContext)
+        
+        var scriptSuffix = '\nexports\n//# sourceURL=' + resolvedFile;
+        result = env.engine.eval(moduleContent + scriptSuffix, requireContext)
     } finally {
         env.requireCurrentDirectory = reqCurDirBak
     }
@@ -303,29 +334,15 @@ function getBitcodeConfig(env, bitcode) {
     }
 }
 
-function buildThrustLog(colorFn) {
-    return function () {
-        var args = Array.prototype.slice.call(arguments).map(function (arg) {
-            return (arg && arg.constructor && (arg.constructor.name === 'Array' || arg.constructor.name === 'Object'))
-                ? JSON.stringify(arg)
-                : arg
-        });
-
-        args.unshift(colorFn('[thrust]'));
-
-        print.apply(null, args);
-    }
-}
-
 function thrust(args) {
     System.setProperty('thrust.dir', _thrustDir.getPath());
-    
+
     load(_pollyFillsPath)
 
     var env = {}
     var currDir = ''
 
-    env.engine = new ScriptEngineManager().getEngineByName("nashorn")
+    _engine = env.engine = new ScriptEngineManager().getEngineByName("nashorn")
     env.cacheScript = {}
 
     var startupFileName = '';
@@ -357,10 +374,13 @@ function thrust(args) {
 
     createGlobalContext(env);
 
-    loadRuntimeJars(env)
-    loadGlobalBitCodes(env);
+    if (hasStartupFile) {
+        loadRuntimeJars(env)
+        loadGlobalBitCodes(env);
+    }
 
     if (hasStartupFile) {
+        console.config('Starting application: ' + startupFile.name);
         require.call(env, './' + startupFile.getName())
     } else {
         require.call(env, './cli/cli').runCLI(args);

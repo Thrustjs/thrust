@@ -14,13 +14,9 @@ function show() {
     print.apply(null, args)
 }
 
-var console = {
-    debug: show,
-    warn: show,
-    log: show,
-    error: show,
-    trace: show
-};
+function identity(i) {
+    return i;
+}
 
 function btoa(decodedString) {
     var encoder = java.util.Base64.getEncoder()

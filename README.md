@@ -1,4 +1,7 @@
-Thrust v5
+## Thrust v5
+
+[![GitHub release](https://img.shields.io/github/release/thrustjs/thrust.svg)]() [![GitHub downloads](https://img.shields.io/github/downloads/thrustjs/thrust/total.svg)]()
+
 ===============
 
 Esta versão do [thrust](https://github.com/Thrustjs/thrust) dispensa a necessidade de um jar, sendo que o mesmo é executado diretamente via jjs.

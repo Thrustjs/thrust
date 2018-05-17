@@ -1,7 +1,7 @@
 var File = Java.type('java.io.File')
 var Files = Java.type('java.nio.file.Files')
 
-var FileUtils = require('../../util/fileUtils')
+var FileUtils = require('fs')
 var Utils = require('../../util/util');
 var repoDownloder = require('../../util/repoDownloader')
 
@@ -13,8 +13,8 @@ function runUpdate (runInfo) {
   var version = runInfo.args.version || 'master';
   var thrustVersionRepo = THRUST_REPO + '#' + version;
 
-  thrustLog('Your current installed version is:', currentBriefJson.version);
-  thrustLog('Attempting to update to version:', version);
+  thrustLogger.info('Your current installed version is:', currentBriefJson.version);
+  thrustLogger.info('Attempting to update to version:', version);
 
   var tempDir;
   var zipFile;
@@ -26,8 +26,8 @@ function runUpdate (runInfo) {
     try {
       repoDownloder.downloadZip(thrustVersionRepo, zipFile);
     } catch (e) {
-      thrustErrorLog('Version ' + (runInfo.args.version || 'master') + ' does not exist.');
-      thrustErrorLog('Check our releases on our official repository.');
+      thrustLogger.error('Version ' + (runInfo.args.version || 'master') + ' does not exist.');
+      thrustLogger.error('Check our releases on our official repository.');
       return;
     }
 
@@ -49,7 +49,7 @@ function runUpdate (runInfo) {
     var downloadedVersion = versionToNumber(downloadedBriefJson.version);
 
     if (currentVersion >= downloadedVersion) {
-      thrustLog('The current installed version is greater than the desired version.');
+      thrustLogger.info('The current installed version is greater than the desired version.');
       return;
     }
 
@@ -61,7 +61,7 @@ function runUpdate (runInfo) {
     FileUtils.copyDirectory(thrustDir, backupDir);
     FileUtils.copyDirectory(downloadedThrustSrc, distDir);
 
-    thrustLog('Version successfully updated to:', downloadedBriefJson.version);
+    thrustLogger.info('Version successfully updated to:', downloadedBriefJson.version);
   } finally {
     FileUtils.deleteQuietly(tempDir);
     FileUtils.deleteQuietly(zipFile);
