@@ -1,7 +1,5 @@
-## Thrust v5
-
-[![GitHub release](https://img.shields.io/github/release/thrustjs/thrust.svg)]() [![GitHub downloads](https://img.shields.io/github/downloads/thrustjs/thrust/total.svg)]()
-
+Thrust
+[![Build Status](https://travis-ci.org/Thrustjs/thrust.svg?branch=master)](https://travis-ci.org/Thrustjs/thrust) [![GitHub release](https://img.shields.io/github/release/thrustjs/thrust.svg)](https://github.com/Thrustjs/thrust/releases) [![GitHub downloads](https://img.shields.io/github/downloads/thrustjs/thrust/total.svg)](https://github.com/Thrustjs/thrust/releases)
 ===============
 
 Esta versão do [thrust](https://github.com/Thrustjs/thrust) dispensa a necessidade de um jar, sendo que o mesmo é executado diretamente via jjs.
