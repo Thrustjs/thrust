@@ -20,10 +20,11 @@ repositories {
 }
 
 ospackage {
+    packageName = 'thrust-jjs'
     os = LINUX
     user = 'root'
 
-    into '/opt/thrust'
+    into '/opt/thrust-jjs'
 
     from('src') {
         into 'lib'
@@ -34,7 +35,7 @@ ospackage {
         fileMode = 0755
     }
 
-    link('/usr/local/bin/thrust', '/opt/thrust/bin/thrust.sh')
+    link('/usr/local/bin/thrust-jjs', '/opt/thrust-jjs/bin/thrust.sh')
 }
 
 clean {
@@ -43,11 +44,10 @@ clean {
 
 task test(type: Exec) {
     workingDir './test'
-    //commandLine '../scripts/thrust-local.sh', 'install'
     commandLine '../scripts/thrust-local.sh', 'test.js'
 }
 
 test.dependsOn clean
-build.dependsOn test
+// build.dependsOn test
 build.finalizedBy buildRpm
 build.finalizedBy buildDeb

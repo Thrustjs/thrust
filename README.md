@@ -37,3 +37,19 @@ cd /home/user/ # posicionar onde será criado
 cd /home/user/appThrust # entrar na pasta criada
 {PROJECT_DIR}/scripts/thrust-local startup.js # iniciar o app
 ```
+
+# Debug no VSCode
+
+Para realizar o debug do thrust siga os seguintes passos:
+
+1 -Baixe o seguinte projeto, extraria e o coloque sua pasta `bin` no path de seu SO: [NCDbg](https://github.com/provegard/ncdbg/releases/tag/0.8.0)
+
+2 - No Visual Studio Code, instale a extensão [Debugger for Chrome](https://marketplace.visualstudio.com/items?itemName=msjsdiag.debugger-for-chrome) e reinicie o mesmo.
+
+3 - Adicione o arquivo de configuração de execução do VSCode, em `.vscode/launch.json`. (Copie o deste repositório)
+
+4 - Coloque as instruções de `debugger;` em seu código.
+
+5 - Inicie sua aplicação com `thrust --debug arquivo.js`
+
+6 - A execução ficará aguardando conexão do debug para prosseguir, então na aba `Debug` do VSCode, inicie a execução de `Attach to NCDbg`
