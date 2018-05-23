@@ -118,6 +118,16 @@ function getConfig()
 * @code dbConfig('path.de.uma.config', 'MeuApp')
 */
 function getBitcodeConfig(bitcode)
+
+/**
+* Usado para ler uma variável de ambiente do SO.
+* Se não informado nenhum parametro, é retornado um objeto com todas as variáveis.
+* @param {String} name - Nome da variável.
+* @param {Object} defaultValue - Opcional, valor default que será utilizado caso a variável seja nula.
+*
+* @code env('PORT', 8778)
+*/
+function env(name, defaultValue)
 ```
 
 ## Parâmetros de configuração

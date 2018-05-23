@@ -75,52 +75,52 @@ function require(fileName) {
         }
 
         scriptInfo = getScriptInfo(fileName)
-        
+
         try {
-        	eval(scriptInfo.scriptContent)
-        	
-        	if (exports !== module.exports) {
-                for (var att in module.exports) {
-                  exports[att] = module.exports[att]
-                }
-        	}
-        	
-//        	for (var name in exports) {
-//        		if (typeof exports[name] == 'function') {
-//        			exports[name] = (function(exports, fnName, oldFn) {
-//            			return function() {
-//            				try {
-//                				return oldFn.apply(exports, arguments)
-//                			} catch (e) {
-//                				print('An error was thrown in ' + exports.$$scriptInfo.fileName + ':' + fnName)
-//                				throw e
-//        					}
-//            			}
-//            		})(exports, name, exports[name])
-//        		}
-//        	}
-//        	
-//        	exports.$$scriptInfo = scriptInfo;
-        	
-            scriptInfo.exports = exports
-            _scriptCache[fileName] = scriptInfo
-        } catch(e) {
-        	let requireCaller = _currentRequireCaller.get();
-        	requireCaller = requireCaller && requireCaller.getAbsolutePath()
+          eval(scriptInfo.scriptContent)
 
-        	if (!requireCaller) {
-        		requireCaller = rootPath
-        	}
+          if (exports !== module.exports) {
+            for (var att in module.exports) {
+              exports[att] = module.exports[att]
+            }
+          }
 
-        	print('[ERROR] An error was throw executing: ' + requireCaller)
+          //        	for (var name in exports) {
+          //        		if (typeof exports[name] == 'function') {
+          //        			exports[name] = (function(exports, fnName, oldFn) {
+          //            			return function() {
+          //            				try {
+          //                				return oldFn.apply(exports, arguments)
+          //                			} catch (e) {
+          //                				print('An error was thrown in ' + exports.$$scriptInfo.fileName + ':' + fnName)
+          //                				throw e
+          //        					}
+          //            			}
+          //            		})(exports, name, exports[name])
+          //        		}
+          //        	}
+          //        	
+          //        	exports.$$scriptInfo = scriptInfo;
 
-        	throw e
+          scriptInfo.exports = exports
+          _scriptCache[fileName] = scriptInfo
+        } catch (e) {
+          let requireCaller = _currentRequireCaller.get();
+          requireCaller = requireCaller && requireCaller.getAbsolutePath()
+
+          if (!requireCaller) {
+            requireCaller = rootPath
+          }
+
+          print('[ERROR] An error was throw executing: ' + requireCaller)
+
+          throw e
         }
       }
-      
+
       return scriptInfo.exports
-    } catch(e) {
-    	print(e)
+    } catch (e) {
+      print(e)
     } finally {
       _currentRequireCaller.set(currentRequireCaller)
     }
@@ -203,13 +203,13 @@ function getScriptInfo(fileName) {
   }
 
   return {
-	  fileName: fileName,
-	  scriptContent: scriptContent,
-	  scriptFile: scriptFile,
-	  lastModified: scriptFile.lastModified(),
-	  isModified: function() {
-		  return this.scriptFile.lastModified() > this.lastModified
-	  }
+    fileName: fileName,
+    scriptContent: scriptContent,
+    scriptFile: scriptFile,
+    lastModified: scriptFile.lastModified(),
+    isModified: function () {
+      return this.scriptFile.lastModified() > this.lastModified
+    }
   };
 }
 
@@ -228,9 +228,9 @@ function loadJar(jarName) {
   var searchPath;
 
   if (jarName.startsWith("./") || jarName.startsWith("../")) {
-	if (_currentRequireCaller.get()) {
-		searchPath = _currentRequireCaller.get().getParent();
-	}
+    if (_currentRequireCaller.get()) {
+      searchPath = _currentRequireCaller.get().getParent();
+    }
 
     if (!searchPath) {
       searchPath = rootPath;
@@ -312,6 +312,23 @@ function requireBabelToGlobal() {
   var babelStr = reader.lines().collect(Collectors.joining());
 
   engine.eval("var babelString = '" + babelStr + "'; eval(babelString);");
+}
+
+/**
+* Usado para ler uma variável de ambiente do SO.
+* Se não informado nenhum parametro, é retornado um objeto com todas as variáveis.
+* @param {String} name - Nome da variável.
+* @param {Object} defaultValue - Opcional, valor default que será utilizado caso a variável seja nula.
+*
+* @code env('PORT', 8778)
+*/
+function env(name, defaultValue) {
+  if (arguments.length == 0) {
+    return java.lang.System.getenv();
+  }
+
+  var value = java.lang.System.getenv()[name];
+  return value == null ? defaultValue : value;
 }
 
 /**
