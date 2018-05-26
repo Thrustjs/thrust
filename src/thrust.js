@@ -28,16 +28,16 @@ function loadRuntimeJars(env) {
     var jarLibDir = Paths.get(env.libRootDirectory, "jars").toFile()
 
     if (jarLibDir.exists()) {
-        var jarLibFileNames = Java.from(jarLibDir.listFiles()).filter(function (file) {
+        var jarLibFileNames = Java.from(jarLibDir.listFiles()).filter(function(file) {
             return file.isFile();
-        }).map(function (file) {
+        }).map(function(file) {
             return file.getName();
         });
 
         if (jarLibFileNames.length) {
             console.config('+ Loading runtime jars:');
 
-            jarLibFileNames.forEach(function (libFileName) {
+            jarLibFileNames.forEach(function(libFileName) {
                 console.config('| - ' + libFileName);
 
                 loadJar.call(env, libFileName);
@@ -57,7 +57,7 @@ function loadGlobalBitCodes(env) {
         if (typeof bitCodeNames === 'string') {
             bitList = [bitCodeNames.trim()];
         } else if (Array.isArray(bitCodeNames)) {
-            bitList = bitCodeNames.map(function (name) {
+            bitList = bitCodeNames.map(function(name) {
                 return name.trim();
             });
         } else {
@@ -66,7 +66,7 @@ function loadGlobalBitCodes(env) {
 
         console.config('+ Loading global bitcodes:');
 
-        bitList.forEach(function (bitCodeName) {
+        bitList.forEach(function(bitCodeName) {
             console.config('| - ' + bitCodeName);
 
             var firstIndexToSearch = bitCodeName.lastIndexOf('/') > -1 ? bitCodeName.lastIndexOf('/') + 1 : 0;
@@ -132,7 +132,7 @@ function injectMonitoring(fncMonitoring) {
     var ths = this
     var novo = {}
 
-    Object.keys(ths).forEach(function (prop) {
+    Object.keys(ths).forEach(function(prop) {
         if (ths[prop].constructor.name === 'Function') {
             novo[prop] = fncMonitoring.bind(null, ths[prop])
         } else {
@@ -221,8 +221,8 @@ function resolveWichScriptFileToRequire(env, fileName) {
 
     var scriptFile;
 
-    possiblePaths.every(function (basePath) {
-        return possibleFileNames.every(function (possibleName) {
+    possiblePaths.every(function(basePath) {
+        return possibleFileNames.every(function(possibleName) {
             var scriptPath = basePath + File.separator + possibleName;
 
             var currentFile = new File(scriptPath);
@@ -267,9 +267,12 @@ function require(filename) {
         // TODO: Verificar problema com majesty
         var requireContext = new SimpleScriptContext();
         requireContext.setBindings(env.globalContext.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE);
-        
-        var scriptSuffix = '\nexports\n//# sourceURL=' + resolvedFile;
-        result = env.engine.eval(moduleContent + scriptSuffix, requireContext)
+
+        // var scriptSuffix = '\nexports\n//# sourceURL=' + resolvedFile;
+        // result = env.engine.eval(moduleContent + scriptSuffix, requireContext)
+        var scriptPrefix = '(function() {\n var exports = {}\n'
+        var scriptSuffix = '\nreturn exports\n})()\n//# sourceURL=' + resolvedFile
+        result = env.engine.eval(scriptPrefix + moduleContent + scriptSuffix, requireContext)
     } finally {
         env.requireCurrentDirectory = reqCurDirBak
     }
@@ -314,10 +317,10 @@ function require(filename) {
 function getBitcodeConfig(env, bitcode) {
     var config = getConfig(env)[bitcode] || {}
 
-    return function (property, appId) {
+    return function(property, appId) {
         var propertyPath = property ? property.split('.') : []
 
-        var result = propertyPath.reduce(function (map, currProp) {
+        var result = propertyPath.reduce(function(map, currProp) {
             if (map && map[currProp]) {
                 return map[currProp]
             } else {
