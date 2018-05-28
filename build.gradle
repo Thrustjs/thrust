@@ -48,6 +48,6 @@ task test(type: Exec) {
 }
 
 test.dependsOn clean
-// build.dependsOn test
+build.dependsOn test
 build.finalizedBy buildRpm
 build.finalizedBy buildDeb

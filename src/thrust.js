@@ -14,9 +14,9 @@ var URL = Java.type("java.net.URL")
 var URLClassLoader = Java.type("java.net.URLClassLoader")
 
 var _thrustDir = new File(__DIR__);
-var _engine;
 var _self = this;
 var _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js';
+var _thrustEnv;
 
 var console;
 
@@ -28,16 +28,16 @@ function loadRuntimeJars(env) {
     var jarLibDir = Paths.get(env.libRootDirectory, "jars").toFile()
 
     if (jarLibDir.exists()) {
-        var jarLibFileNames = Java.from(jarLibDir.listFiles()).filter(function(file) {
+        var jarLibFileNames = Java.from(jarLibDir.listFiles()).filter(function (file) {
             return file.isFile();
-        }).map(function(file) {
+        }).map(function (file) {
             return file.getName();
         });
 
         if (jarLibFileNames.length) {
             console.config('+ Loading runtime jars:');
 
-            jarLibFileNames.forEach(function(libFileName) {
+            jarLibFileNames.forEach(function (libFileName) {
                 console.config('| - ' + libFileName);
 
                 loadJar.call(env, libFileName);
@@ -57,7 +57,7 @@ function loadGlobalBitCodes(env) {
         if (typeof bitCodeNames === 'string') {
             bitList = [bitCodeNames.trim()];
         } else if (Array.isArray(bitCodeNames)) {
-            bitList = bitCodeNames.map(function(name) {
+            bitList = bitCodeNames.map(function (name) {
                 return name.trim();
             });
         } else {
@@ -66,7 +66,7 @@ function loadGlobalBitCodes(env) {
 
         console.config('+ Loading global bitcodes:');
 
-        bitList.forEach(function(bitCodeName) {
+        bitList.forEach(function (bitCodeName) {
             console.config('| - ' + bitCodeName);
 
             var firstIndexToSearch = bitCodeName.lastIndexOf('/') > -1 ? bitCodeName.lastIndexOf('/') + 1 : 0;
@@ -93,6 +93,45 @@ function loadJar(jarName) { // eslint-disable-line
     var jarPath = searchPath + File.separator + jarName;
 
     classLoadJar(jarPath);
+}
+
+/**
+* Usado para ler uma variável de ambiente do SO.
+* Se não informado nenhum parametro, é retornado um objeto com todas as variáveis.
+* @param {String} name - Nome da variável.
+* @param {Object} defaultValue - Opcional, valor default que será utilizado caso a variável seja nula.
+*
+* @code env('PORT', 8778)
+*/
+function getEnv(name, defaultValue) {
+    var env = this;
+
+    if (arguments.length == 0) {
+        return Object.assign({}, env.thrustEnv);
+    }
+
+    var value = env.thrustEnv[name];
+
+    if (isEmpty(value)) {
+        value = recursiveGet(getConfig(env), name);
+    }
+
+    return isEmpty(value) ? defaultValue : value;
+}
+
+function recursiveGet(obj, name) {
+    if (name.indexOf('.') === -1) {
+        return obj[name];
+    }
+
+    var propertyPath = name.split('.');
+    return propertyPath.reduce(function (result, currProp) {
+        return isEmpty(result) ? undefined : result[currProp];
+    }, obj)
+}
+
+function isEmpty(value) {
+    return (value == null || typeof value === 'undefined');
 }
 
 function classLoadJar(jarPath) {
@@ -132,7 +171,7 @@ function injectMonitoring(fncMonitoring) {
     var ths = this
     var novo = {}
 
-    Object.keys(ths).forEach(function(prop) {
+    Object.keys(ths).forEach(function (prop) {
         if (ths[prop].constructor.name === 'Function') {
             novo[prop] = fncMonitoring.bind(null, ths[prop])
         } else {
@@ -147,6 +186,7 @@ function createGlobalContext(env) {
     var globalContext = new SimpleScriptContext();
     var polyfills = getFileContent(_pollyFillsPath);
 
+    globalContext.setAttribute('env', getEnv.bind(env), ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('loadJar', loadJar, ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('getConfig', getConfig.bind(null, env), ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('getBitcodeConfig', getBitcodeConfig.bind(null, env), ScriptContext.ENGINE_SCOPE)
@@ -221,8 +261,8 @@ function resolveWichScriptFileToRequire(env, fileName) {
 
     var scriptFile;
 
-    possiblePaths.every(function(basePath) {
-        return possibleFileNames.every(function(possibleName) {
+    possiblePaths.every(function (basePath) {
+        return possibleFileNames.every(function (possibleName) {
             var scriptPath = basePath + File.separator + possibleName;
 
             var currentFile = new File(scriptPath);
@@ -268,10 +308,8 @@ function require(filename) {
         var requireContext = new SimpleScriptContext();
         requireContext.setBindings(env.globalContext.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE);
 
-        // var scriptSuffix = '\nexports\n//# sourceURL=' + resolvedFile;
-        // result = env.engine.eval(moduleContent + scriptSuffix, requireContext)
-        var scriptPrefix = '(function() {\n var exports = {}\n'
-        var scriptSuffix = '\nreturn exports\n})()\n//# sourceURL=' + resolvedFile
+        var scriptPrefix = '(function() {var exports = {};\t'
+        var scriptSuffix = '\nreturn exports;\t})()\t//# sourceURL=' + resolvedFile
         result = env.engine.eval(scriptPrefix + moduleContent + scriptSuffix, requireContext)
     } finally {
         env.requireCurrentDirectory = reqCurDirBak
@@ -317,14 +355,14 @@ function require(filename) {
 function getBitcodeConfig(env, bitcode) {
     var config = getConfig(env)[bitcode] || {}
 
-    return function(property, appId) {
+    return function (property, appId) {
         var propertyPath = property ? property.split('.') : []
 
-        var result = propertyPath.reduce(function(map, currProp) {
+        var result = propertyPath.reduce(function (map, currProp) {
             if (map && map[currProp]) {
                 return map[currProp]
             } else {
-                return undefined
+                return map
             }
 
         }, config)
@@ -337,6 +375,34 @@ function getBitcodeConfig(env, bitcode) {
     }
 }
 
+function buildThrustEnv(args) {
+    var env = {};
+
+    java.lang.System.getenv().forEach(function (key, value) {
+        env[key] = value;
+    });
+
+    var optionName;
+    args.forEach(function (arg) {
+        if (arg.indexOf('-') === 0) {
+            if (optionName) {
+                env[optionName] = true
+            }
+
+            optionName = arg.substring(1);
+        } else if (optionName) {
+            env[optionName] = arg;
+            optionName = undefined;
+        }
+    });
+
+    if (optionName) {
+        env[optionName] = true;
+    }
+
+    return env;
+}
+
 function thrust(args) {
     System.setProperty('thrust.dir', _thrustDir.getPath());
 
@@ -345,7 +411,7 @@ function thrust(args) {
     var env = {}
     var currDir = ''
 
-    _engine = env.engine = new ScriptEngineManager().getEngineByName("nashorn")
+    env.engine = new ScriptEngineManager().getEngineByName("nashorn")
     env.cacheScript = {}
 
     var startupFileName = '';
@@ -353,6 +419,8 @@ function thrust(args) {
     if (args.length > 0) {
         startupFileName = args[0].replace(/\.js$/, '').concat('.js')
     }
+
+    env.thrustEnv = buildThrustEnv(args.slice(1));
 
     var startupFile = new File(startupFileName)
     var hasStartupFile = startupFile.exists() && startupFile.isFile();
