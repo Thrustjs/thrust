@@ -362,7 +362,7 @@ function getBitcodeConfig(env, bitcode) {
             if (map && map[currProp]) {
                 return map[currProp]
             } else {
-                return map
+                return undefined
             }
 
         }, config)
