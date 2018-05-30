@@ -1,9 +1,9 @@
 var URL = Java.type('java.net.URL')
-var FileUtils = require('fs')
+var fs = require('fs')
 
 function downloadZip (repo, zipFile) {
   var url = new URL(getUrl(normalize(repo)))
-  FileUtils.copyURLToFile(url, zipFile)
+  fs.copyURLToFile(url, zipFile)
 }
 
 /**

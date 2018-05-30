@@ -5,7 +5,7 @@ var Paths = Java.type('java.nio.file.Paths')
 var StandardCharsets = Java.type('java.nio.charset.StandardCharsets')
 
 function show() {
-    var args = Array.prototype.slice.call(arguments).map(function(arg) {
+    var args = Array.prototype.slice.call(arguments).map(function (arg) {
         return (arg && arg.constructor && (arg.constructor.name == "Array" || arg.constructor.name === "Object"))
             ? JSON.stringify(arg)
             : arg
@@ -13,6 +13,14 @@ function show() {
 
     print.apply(null, args)
 }
+
+var console = {
+    debug: show,
+    warn: show,
+    log: show,
+    error: show,
+    trace: show
+};
 
 function identity(i) {
     return i;
@@ -36,7 +44,7 @@ if (!Object.assign) {
         enumerable: false,
         configurable: true,
         writable: true,
-        value: function(target) {
+        value: function (target) {
             "use strict";
             if (target === undefined || target === null) {
                 throw new TypeError('Cannot convert first argument to object');
@@ -67,7 +75,7 @@ if (!Object.assign) {
 
 if (!Object.values) {
     Object.values = function values(target) {
-        return Object.getOwnPropertyNames(target).map(function(k) {
+        return Object.getOwnPropertyNames(target).map(function (k) {
             return target[k]
         })
     }
@@ -76,7 +84,7 @@ if (!Object.values) {
 
 if (!Array.prototype.find) {
     Object.defineProperty(Array.prototype, 'find', {
-        value: function(predicate) {
+        value: function (predicate) {
             // 1. Let O be ? ToObject(this value).
             if (this == null) {
                 throw new TypeError('"this" is null or not defined');
@@ -149,24 +157,24 @@ if (!String.prototype.padStart) {
 var JCompletableFuture = Java.type('java.util.concurrent.CompletableFuture');
 var JCompleteFutureArray = Java.type('java.util.concurrent.CompletableFuture[]');
 // var JPromiseException = Java.type('net.arnx.nashorn.lib.PromiseException');
-var JPromiseException = function(result) {
+var JPromiseException = function (result) {
     this.result = result
-    this.getResult = function() { return this.result }
+    this.getResult = function () { return this.result }
 }
 
 var _global_ = this
-var Promise = function(resolver, futures) {
+var Promise = function (resolver, futures) {
     var that = this;
     if (resolver instanceof JCompletableFuture) {
         that._future = resolver;
         that._futures = futures;
     } else {
-        var func = Java.synchronized(function() {
+        var func = Java.synchronized(function () {
             var status, result;
-            (0, resolver)(function(value) {
+            (0, resolver)(function (value) {
                 status = 'fulfilled';
                 result = value;
-            }, function(reason) {
+            }, function (reason) {
                 status = 'rejected';
                 result = reason;
             });
@@ -186,8 +194,8 @@ var Promise = function(resolver, futures) {
     }
 };
 
-Promise.all = function(array) {
-    var futures = array.map(function(elem) {
+Promise.all = function (array) {
+    var futures = array.map(function (elem) {
         if (elem instanceof Promise) {
             return elem._future;
         }
@@ -196,8 +204,8 @@ Promise.all = function(array) {
     return new Promise(JCompletableFuture.allOf(Java.to(futures, JCompleteFutureArray)), futures);
 };
 
-Promise.race = function(array) {
-    var futures = array.map(function(elem) {
+Promise.race = function (array) {
+    var futures = array.map(function (elem) {
         if (elem instanceof Promise) {
             return elem._future;
         }
@@ -206,13 +214,13 @@ Promise.race = function(array) {
     return new Promise(JCompletableFuture.anyOf(Java.to(futures, JCompleteFutureArray)));
 };
 
-Promise.resolve = function(value) {
+Promise.resolve = function (value) {
     if (value instanceof Promise) {
         return value;
     } else if (value != null
         && (typeof value === 'function' || typeof value === 'object')
         && typeof value.then === 'function') {
-        return new Promise(function(fulfill, reject) {
+        return new Promise(function (fulfill, reject) {
             try {
                 return {
                     result: value.then(fulfill, reject)
@@ -228,18 +236,18 @@ Promise.resolve = function(value) {
     }
 };
 
-Promise.reject = function(value) {
-    return new Promise(function(fulfill, reject) {
+Promise.reject = function (value) {
+    return new Promise(function (fulfill, reject) {
         reject(value);
     });
 };
 
-Promise.prototype.then = function(onFulfillment, onRejection) {
+Promise.prototype.then = function (onFulfillment, onRejection) {
     var that = this;
-    return new Promise(that._future.handle(function(success, error) {
+    return new Promise(that._future.handle(function (success, error) {
         if (success == null && error == null && that._futures != null) {
             success = {
-                result: that._futures.map(function(elem) {
+                result: that._futures.map(function (elem) {
                     return elem.get().result;
                 })
             };
@@ -290,7 +298,7 @@ Promise.prototype.then = function(onFulfillment, onRejection) {
     }));
 };
 
-Promise.prototype.catch = function(onRejection) {
+Promise.prototype.catch = function (onRejection) {
     return this.then(null, onRejection);
 };
 
@@ -322,11 +330,11 @@ function popTimeout() {
     phaser.forceTermination();
 }
 
-var onTaskFinished = function() {
+var onTaskFinished = function () {
     phaser.arriveAndDeregister();
 };
 
-setTimeout = function(fn, millis /* [, args...] */) {
+setTimeout = function (fn, millis /* [, args...] */) {
     var args = [].slice.call(arguments, 2, arguments.length);
 
     timer = (timer === undefined) ? new Timer('jsEventLoop', false) : timer
@@ -334,7 +342,7 @@ setTimeout = function(fn, millis /* [, args...] */) {
 
     var phase = phaser.register();
     var canceled = false;
-    timer.schedule(function() {
+    timer.schedule(function () {
         if (canceled) {
             return;
         }
@@ -351,33 +359,33 @@ setTimeout = function(fn, millis /* [, args...] */) {
 
     pushTimeout();
 
-    return function() {
+    return function () {
         onTaskFinished();
         canceled = true;
         popTimeout();
     };
 };
 
-clearTimeout = function(cancel) {
+clearTimeout = function (cancel) {
     cancel();
 };
 
-setInterval = function(fn, delay /* [, args...] */) {
+setInterval = function (fn, delay /* [, args...] */) {
     var args = [].slice.call(arguments, 2, arguments.length);
 
     var cancel = null;
 
-    var loop = function() {
+    var loop = function () {
         cancel = setTimeout(loop, delay);
         fn.apply(context, args);
     };
 
     cancel = setTimeout(loop, delay);
-    return function() {
+    return function () {
         cancel();
     };
 };
 
-clearInterval = function(cancel) {
+clearInterval = function (cancel) {
     cancel();
 };

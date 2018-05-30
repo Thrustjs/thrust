@@ -2,12 +2,15 @@ var File = Java.type('java.io.File');
 var Files = Java.type('java.nio.file.Files');
 var InputStream = Java.type('java.io.InputStream');
 var BufferedReader = Java.type('java.io.BufferedReader');
+var ZipInputStream = Java.type("java.util.zip.ZipInputStream");
+var BufferedOutputStream = Java.type( "java.io.BufferedOutputStream");
 var FileOutputStream = Java.type('java.io.FileOutputStream');
 var FileInputStream = Java.type('java.io.FileInputStream');
 var Charsets = Java.type('java.nio.charset.Charset');
 var StandardCharsets = Java.type('java.nio.charset.StandardCharsets');
 var JString = Java.type('java.lang.String');
-var Paths = Java.type('java.nio.file.Paths')
+var Paths = Java.type('java.nio.file.Paths');
+var Byte = Java.type("byte[]")
 
 var ONE_KB = 1024;
 var ONE_MB = ONE_KB * ONE_KB;
@@ -372,12 +375,67 @@ function lines(fileObject, charSet) {
   throw 'fileObject type is not valid on fs.lines function!'
 }
 
+function unzip(zipFilePath, destDirectory) {
+  var destDir = undefined
+
+  if (destDirectory) {
+    var destDir = new File(destDirectory)
+    if (!destDir.exists()) {
+      destDir.mkdir()
+    }
+  } else {
+    destDirectory = new File(".").getAbsolutePath();
+  }
+
+  var zipIn;
+
+  try {
+    zipIn = new ZipInputStream(new FileInputStream(zipFilePath))
+    
+    var createdFiles = [];
+    var entry = zipIn.getNextEntry()
+    
+    while (entry != null) {
+      createdFiles.push(entry.getName())
+  
+      var filePath = destDirectory + File.separator + entry.getName()
+      if (!entry.isDirectory()) {
+        extractFile(zipIn, filePath)
+      } else {
+        var dir = new File(filePath)
+        dir.mkdir()
+      }
+      zipIn.closeEntry()
+      entry = zipIn.getNextEntry()
+    }
+
+    return createdFiles;
+  } finally {
+    close(zipIn);
+  }
+}
+
+function extractFile(zipIn, filePath) {
+  var bos;
+
+  try {
+    bos = new BufferedOutputStream(new FileOutputStream(filePath))
+
+    bos = new BufferedOutputStream(new FileOutputStream(filePath))
+    var bytesIn = new Byte(4096)
+    var read = 0
+
+    while ((read = zipIn.read(bytesIn)) !== -1) {
+      bos.write(bytesIn, 0, read)
+    }
+  } finally {
+    close(bos);
+  }
+}
+
 function close(closeable) {
   if (closeable) {
-    try {
-      closeable.close();
-    } catch (e) {
-    }
+    closeable.close();
   }
 }
 
@@ -392,5 +450,6 @@ exports = {
   readAll: readAll,
   exists: exists,
   lines: lines,
-  readJson: readJson
+  readJson: readJson,
+  unzip: unzip
 };

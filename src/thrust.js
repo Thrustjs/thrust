@@ -18,8 +18,6 @@ var _self = this;
 var _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js';
 var _thrustEnv;
 
-var console;
-
 function getFileContent(fullPath) {
     return new JString(Files.readAllBytes(Paths.get(fullPath)))
 }
@@ -35,15 +33,9 @@ function loadRuntimeJars(env) {
         });
 
         if (jarLibFileNames.length) {
-            console.config('+ Loading runtime jars:');
-
             jarLibFileNames.forEach(function (libFileName) {
-                console.config('| - ' + libFileName);
-
                 loadJar.call(env, libFileName);
             });
-
-            console.config('+ finished.');
         }
     }
 }
@@ -64,18 +56,12 @@ function loadGlobalBitCodes(env) {
             throw new Error('loadToGlobal property must be a string or an array.');
         }
 
-        console.config('+ Loading global bitcodes:');
-
         bitList.forEach(function (bitCodeName) {
-            console.config('| - ' + bitCodeName);
-
             var firstIndexToSearch = bitCodeName.lastIndexOf('/') > -1 ? bitCodeName.lastIndexOf('/') + 1 : 0;
             var bitCodeExportName = bitCodeName.substring(firstIndexToSearch, bitCodeName.length());
 
             dangerouslyLoadToGlobal(env, bitCodeExportName, require.call(env, bitCodeName));
         });
-
-        console.config('+ finished.');
     }
 }
 
@@ -198,66 +184,11 @@ function createGlobalContext(env) {
     env.engine.eval(polyfills, globalContext);
 
     env.globalContext = globalContext;
-
-    var ConsoleColors = require.call(env, 'console-colors');
-    var logger = require.call(env, 'logger');
-
-    var appLogger = logger(undefined, env.config && env.config.logger);
-
-    console = {
-        error: appLogger.severe,
-        warn: appLogger.warning,
-        log: appLogger.info,
-        config: appLogger.config,
-        fine: appLogger.fine,
-        finer: appLogger.finer,
-        finest: appLogger.finest
-    };
-
-    globalContext.setAttribute('appLogger', appLogger, ScriptContext.ENGINE_SCOPE)
-    globalContext.setAttribute('console', console, ScriptContext.ENGINE_SCOPE)
 }
 
 function resolveWichScriptFileToRequire(env, fileName) {
-    var relativeRequire = fileName.startsWith('./') || fileName.startsWith('../');
-    var relativeToRootRequire = fileName.startsWith('/');
-
-    var possibleFileNames = [];
-    var possiblePaths = [];
-
-    if (fileName.endsWith('.js') || fileName.endsWith('.json')) {
-        possibleFileNames.push(fileName);
-    } else {
-        if (fileName.indexOf('/') < 0) {
-            fileName = 'thrust-bitcodes/' + fileName;
-        }
-
-        possibleFileNames.push(fileName + File.separator + 'index.js');
-
-        possibleFileNames.push(fileName.concat('.js'));
-    }
-
-    if (relativeToRootRequire) {
-        possiblePaths.push(env.appRootDirectory);
-    } else {
-        if (!env.appRootDirectory.equals(env.requireCurrentDirectory)) {
-            possiblePaths.push(env.requireCurrentDirectory);
-        }
-
-        if (relativeRequire) {
-            possiblePaths.push(env.appRootDirectory);
-
-            possiblePaths.push(_thrustDir.getPath());
-        } else {
-            if (env.appRootDirectory) {
-                possiblePaths.push(env.appRootDirectory + File.separator + '.lib' + File.separator + 'bitcodes');
-            }
-
-            possiblePaths.push(_thrustDir.getPath());
-
-            possiblePaths.push(_thrustDir.getPath() + File.separator + '.lib' + File.separator + 'bitcodes');
-        }
-    }
+    var possibleFileNames = resolvePossibleFileNames(env, fileName);
+    var possiblePaths = resolvePossibleFilePaths(env, fileName);
 
     var scriptFile;
 
@@ -281,6 +212,56 @@ function resolveWichScriptFileToRequire(env, fileName) {
     }
 
     return scriptFile;
+}
+
+function resolvePossibleFileNames(env, fileName) {
+    var possibleFileNames = [];
+
+    if (fileName.endsWith('.js') || fileName.endsWith('.json')) {
+        possibleFileNames.push(fileName);
+    } else {
+        if (fileName.indexOf('/') < 0) {
+            possibleFileNames.push(fileName.concat('.js'));
+
+            fileName = 'thrust-bitcodes/' + fileName;
+        }
+
+        possibleFileNames.push(fileName + File.separator + 'index.js');
+
+        possibleFileNames.push(fileName.concat('.js'));
+    }
+
+    return possibleFileNames;
+}
+
+function resolvePossibleFilePaths(env, fileName) {
+    var relativeRequire = fileName.startsWith('./') || fileName.startsWith('../');
+    var relativeToRootRequire = fileName.startsWith('/');
+    var possiblePaths = [];
+
+    if (relativeToRootRequire) {
+        possiblePaths.push(env.appRootDirectory);
+    } else {
+        if (!env.appRootDirectory.equals(env.requireCurrentDirectory)) {
+            possiblePaths.push(env.requireCurrentDirectory);
+        }
+
+        if (relativeRequire) {
+            possiblePaths.push(env.appRootDirectory);
+
+            possiblePaths.push(_thrustDir.getPath());
+        } else {
+            if (env.appRootDirectory) {
+                possiblePaths.push(env.appRootDirectory + File.separator + '.lib' + File.separator + 'bitcodes');
+            }
+
+            possiblePaths.push(_thrustDir.getPath() + File.separator + 'core');
+
+            possiblePaths.push(_thrustDir.getPath() + File.separator + '.lib' + File.separator + 'bitcodes');
+        }
+    }
+
+    return possiblePaths;
 }
 
 function require(filename) {
@@ -451,7 +432,6 @@ function thrust(args) {
     }
 
     if (hasStartupFile) {
-        console.config('Starting application: ' + startupFile.name);
         require.call(env, './' + startupFile.getName())
     } else {
         require.call(env, './cli/cli').runCLI(args);

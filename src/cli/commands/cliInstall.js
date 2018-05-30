@@ -3,9 +3,8 @@ var Files = Java.type('java.nio.file.Files')
 var Paths = Java.type('java.nio.file.Paths')
 var URL = Java.type('java.net.URL')
 
-var FileUtils = require('fs')
+var fs = require('fs')
 var repoDownloder = require('../../util/repoDownloader')
-var Utils = require('../../util/util')
 var Constants = require('../../util/constants');
 
 function log (str) {
@@ -27,7 +26,7 @@ function runInstall (runInfo) {
     throw new Error("This isn't a thrust app, 'brief.json' not found.")
   }
 
-  var briefJson = readJson(briefJsonFile.getPath());
+  var briefJson = fs.readJson(briefJsonFile.getPath());
 
   var resource = runInfo.args.resource
   var bitcodesToInstall
@@ -105,7 +104,7 @@ function runInstall (runInfo) {
 
     if (depsArr.indexOf(resource) < 0) {
       depsArr.push(resource)
-      FileUtils.write(briefJsonFile, JSON.stringify(briefJson, null, 2));
+      fs.write(briefJsonFile, JSON.stringify(briefJson, null, 2));
     }
   }
 }
@@ -138,7 +137,7 @@ function installBitcodes (installDir, bitcodesToInstall) {
 
       repoDownloder.downloadZip(bitcode, zipFile)
 
-      var createdFiles = Utils.unzip(zipFile.getPath(), tempDir)
+      var createdFiles = fs.unzip(zipFile.getPath(), tempDir)
 
       var unzipedDir = new File(tempDir + File.separator + createdFiles[0]);
 
@@ -148,7 +147,7 @@ function installBitcodes (installDir, bitcodesToInstall) {
         throw new Error("Invalid thrust-seed, 'brief.json' was not found on " + briefJsonFile.getAbsolutePath())
       }
 
-      var libBriefJson = Utils.readJson(briefJsonFile);
+      var libBriefJson = fs.readJson(briefJsonFile);
 
       var cachedBitcode = findBitcodeInLocalCache(owner, repository, libBriefJson.version)
 
@@ -156,12 +155,12 @@ function installBitcodes (installDir, bitcodesToInstall) {
         log('Version ' + cachedBitcode.version + ' found on cache...')
 
         if (libBitcodeDir.exists()) {
-          FileUtils.cleanDirectory(libBitcodeDir);
+          fs.cleanDirectory(libBitcodeDir);
         } else {
           libBitcodeDir.mkdirs()
         }
 
-        FileUtils.copyDirectory(cachedBitcode.file, libBitcodeDir);
+        fs.copyDirectory(cachedBitcode.file, libBitcodeDir);
       } else {
         log('Not found on cache, downloading...');
 
@@ -170,36 +169,36 @@ function installBitcodes (installDir, bitcodesToInstall) {
         var libCacheFile = Paths.get(Constants.LOCAL_REPO_BITCODE, owner, repository, libBriefJson.version).toFile();
 
         if (libCacheFile.exists()) {
-          FileUtils.cleanDirectory(libCacheFile);
+          fs.cleanDirectory(libCacheFile);
         } else {
           libCacheFile.mkdirs()
         }
 
         if (!pathToCopy || pathToCopy === '.') {
-          FileUtils.copyDirectory(unzipedDir, libCacheFile)
+          fs.copyDirectory(unzipedDir, libCacheFile)
         } else {
           var fileToCopy = new File(unzipedDir, pathToCopy);
 
           if (fileToCopy.isDirectory()) {
-            FileUtils.copyDirectory(fileToCopy, libCacheFile)
+            fs.copyDirectory(fileToCopy, libCacheFile)
           } else {
-            FileUtils.copyFile(fileToCopy, new File(libCacheFile, pathToCopy))
+            fs.copyFile(fileToCopy, new File(libCacheFile, pathToCopy))
           }
 
-          FileUtils.copyFile(briefJsonFile, new File(libCacheFile, 'brief.json'))
+          fs.copyFile(briefJsonFile, new File(libCacheFile, 'brief.json'))
         }
 
         if (libBitcodeDir.exists()) {
-          FileUtils.cleanDirectory(libBitcodeDir);
+          fs.cleanDirectory(libBitcodeDir);
         } else {
           libBitcodeDir.mkdirs()
         }
 
-        FileUtils.copyDirectory(libCacheFile, libBitcodeDir)
+        fs.copyDirectory(libCacheFile, libBitcodeDir)
       }
     } finally {
-      FileUtils.deleteQuietly(tempDir);
-      FileUtils.deleteQuietly(zipFile);
+      fs.deleteQuietly(tempDir);
+      fs.deleteQuietly(zipFile);
     }
 
     var dependencies = libBriefJson.dependencies
@@ -251,12 +250,12 @@ function installJarDependencies (installDir, jarDeps) {
       log('Not found on cache, downloading...')
 
       var url = new URL(formatString(Constants.MAVEN_BASE_URL, group.replace(/\./g, '/'), artifact, version, jarName))
-      FileUtils.copyURLToFile(url, jarCache);
+      fs.copyURLToFile(url, jarCache);
     } else {
       log('Version ' + version + ' found on cache...')
     }
 
-    FileUtils.copyFile(jarCache, libJarFile)
+    fs.copyFile(jarCache, libJarFile)
 
     print('DONE')
   })

@@ -1,9 +1,8 @@
 var File = Java.type('java.io.File')
 var Files = Java.type('java.nio.file.Files')
 
-var FileUtils = require('fs')
+var fs = require('fs')
 var repoDownloder = require('../../util/repoDownloader');
-var Utils = require('../../util/util');
 var Constants = require('../../util/constants');
 var cliInstall = require('./cliInstall.js');
 
@@ -25,7 +24,7 @@ function runInit (runInfo) {
 
   if (fileCount > 0) {
     if (runInfo.options.force) {
-      FileUtils.cleanDirectory(installDirFile);
+      fs.cleanDirectory(installDirFile);
     } else {
       print('[ERROR] The directory ' + installDirFile.getAbsolutePath() + ' must be empty. You can use -f option to force init (it will clean the directory)...')
       return
@@ -45,7 +44,7 @@ function runInit (runInfo) {
 
     repoDownloder.downloadZip(template, zipFile)
 
-    var createdFiles = Utils.unzip(zipFile.getPath(), installDir)
+    var createdFiles = fs.unzip(zipFile.getPath(), installDir)
 
     var unzipedDir = new File(installDir + File.separator + createdFiles[0]);
 
@@ -55,24 +54,24 @@ function runInit (runInfo) {
       throw new Error("Invalid thrust-seed, 'brief.json' was not found on " + briefJsonFile.getAbsolutePath())
     }
 
-    var templateBrief = Utils.readJson(briefJsonFile.getAbsolutePath());
+    var templateBrief = fs.readJson(briefJsonFile.getAbsolutePath());
 
-    FileUtils.copyDirectory(unzipedDir, new File(installDir))
+    fs.copyDirectory(unzipedDir, new File(installDir))
 
-    FileUtils.deleteDirectory(unzipedDir)
-    FileUtils.deleteDirectory(new File(installDir + File.separator + 'git-hooks'))
-    FileUtils.deleteQuietly(new File(installDir + File.separator + 'brief.json'))
-    FileUtils.deleteQuietly(new File(installDir + File.separator + 'README.md'))
-    FileUtils.deleteQuietly(new File(installDir + File.separator + 'LICENSE'))
+    fs.deleteDirectory(unzipedDir)
+    fs.deleteDirectory(new File(installDir + File.separator + 'git-hooks'))
+    fs.deleteQuietly(new File(installDir + File.separator + 'brief.json'))
+    fs.deleteQuietly(new File(installDir + File.separator + 'README.md'))
+    fs.deleteQuietly(new File(installDir + File.separator + 'LICENSE'))
 
-    FileUtils.deleteQuietly(zipFile)
+    fs.deleteQuietly(zipFile)
 
     var projectBrief = Object.create(null)
     projectBrief.name = 'thrust-app'
     projectBrief.version = '1.0'
     projectBrief.dependencies = templateBrief.dependencies
 
-    FileUtils.write(new File(installDir, 'brief.json'), JSON.stringify(projectBrief, null, 2));
+    fs.write(new File(installDir, 'brief.json'), JSON.stringify(projectBrief, null, 2));
 
     if (projectBrief.dependencies) {
       cliInstall.runner({
@@ -86,7 +85,7 @@ function runInit (runInfo) {
 
     print('Your thrust app is ready to use.')
   } catch (e) {
-    FileUtils.cleanDirectory(installDirFile);
+    fs.cleanDirectory(installDirFile);
     print();
     print('Failed to create a new thrust app.');
     throw e;
