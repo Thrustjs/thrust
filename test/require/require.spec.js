@@ -18,6 +18,31 @@ exports = function exec(describe, it, beforeEach, afterEach, expect, should, ass
       });
     });
 
+    it('Deve ser possível fazer um require de uma pasta com index.js', function () {
+      var index = require('./require/folder');
+      expect(index.value).to.equals('folder/index');
+    });
+
+    it('Deve ser possível fazer um require de bitcode core', function () {
+      var fs = require('fs');
+      expect(typeof fs.exists).to.equals('function');
+    });
+
+    it('Deve ser possível fazer um require de bitcode oficial', function () {
+      var bitcode = require('bitcode');
+      expect(bitcode.value).to.equals('thrust-bitcodes/bitcode');
+    });
+
+    it('Deve ser possível fazer um require de bitcode de outra organização', function () {
+      var bitcode = require('outra-org/outro-bitcode');
+      expect(bitcode.value).to.equals('outra-org/outro-bitcode');
+    });
+
+    it('Deve ser possível fazer um require de um arquivo que importa um bitcode de mesmo nome', function () {
+      var bitcode = require('./require/bitcode.js');
+      expect(bitcode.value).to.equals('thrust-bitcodes/bitcode');
+    });
+
     it('Deve ser possível exportar um objeto composto por dois requires', function () {
       var value = require('./require/utilAppendExport.js');
       expect(value).to.be.an('object');

@@ -220,14 +220,17 @@ function resolvePossibleFileNames(env, fileName) {
     if (fileName.endsWith('.js') || fileName.endsWith('.json')) {
         possibleFileNames.push(fileName);
     } else {
-        if (fileName.indexOf('/') < 0) {
+        var isAbstract = fileName.match(/^(\.\/|\.\.\/|\/)/) == null
+
+        if (isAbstract && fileName.indexOf('/') < 0) {
+            //Core bitcodes
             possibleFileNames.push(fileName.concat('.js'));
 
+            //official bitcodes
             fileName = 'thrust-bitcodes/' + fileName;
         }
 
         possibleFileNames.push(fileName + File.separator + 'index.js');
-
         possibleFileNames.push(fileName.concat('.js'));
     }
 
@@ -241,24 +244,14 @@ function resolvePossibleFilePaths(env, fileName) {
 
     if (relativeToRootRequire) {
         possiblePaths.push(env.appRootDirectory);
+    } else if (relativeRequire) {
+        possiblePaths.push(env.requireCurrentDirectory);
     } else {
-        if (!env.appRootDirectory.equals(env.requireCurrentDirectory)) {
-            possiblePaths.push(env.requireCurrentDirectory);
-        }
+        // application bitcodes
+        possiblePaths.push(env.appRootDirectory + File.separator + '.lib' + File.separator + 'bitcodes');
 
-        if (relativeRequire) {
-            possiblePaths.push(env.appRootDirectory);
-
-            possiblePaths.push(_thrustDir.getPath());
-        } else {
-            if (env.appRootDirectory) {
-                possiblePaths.push(env.appRootDirectory + File.separator + '.lib' + File.separator + 'bitcodes');
-            }
-
-            possiblePaths.push(_thrustDir.getPath() + File.separator + 'core');
-
-            possiblePaths.push(_thrustDir.getPath() + File.separator + '.lib' + File.separator + 'bitcodes');
-        }
+        // core bitcodes
+        possiblePaths.push(_thrustDir.getPath() + File.separator + 'core');
     }
 
     return possiblePaths;
@@ -285,7 +278,6 @@ function require(filename) {
     env.requireCurrentDirectory = new File(resolvedFile).getAbsoluteFile().getParent().replace(/\.$/, '')
 
     try {
-        // TODO: Verificar problema com majesty
         var requireContext = new SimpleScriptContext();
         requireContext.setBindings(env.globalContext.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE);
 
