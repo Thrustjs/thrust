@@ -6,14 +6,14 @@ var repoDownloder = require('../../util/repoDownloader.js')
 
 var THRUST_REPO = 'Thrustjs/thrust';
 
-function runUpdate(runInfo) {
+function runUpgrade(runInfo) {
   var currentBriefJson = getCurrentVersionBrief();
 
   var version = runInfo.args.version || 'master';
   var thrustVersionRepo = THRUST_REPO + '#' + version;
 
   console.log('Your current installed version is:', currentBriefJson.version);
-  console.log('Attempting to update to version:', version);
+  console.log('Attempting to upgrade to version:', version);
 
   var tempDir;
   var zipFile;
@@ -26,7 +26,7 @@ function runUpdate(runInfo) {
       repoDownloder.downloadZip(thrustVersionRepo, zipFile);
     } catch (e) {
       console.log('Version ' + (runInfo.args.version || 'master') + ' does not exist.');
-      console.log('Check our releases on our official repository.');
+      console.log('Check our releases on our official repository. [https://github.com/Thrustjs/thrust/releases/]');
       return;
     }
 
@@ -81,19 +81,19 @@ function versionToNumber(version) {
   var nVersion = Number(version.replace(/\./g, ''))
 
   if (isNaN(nVersion)) {
-    throw new Error("[ERROR] Invalid version '" + version + "' on thrust update");
+    throw new Error("[ERROR] Invalid version '" + version + "' on thrust upgrade");
   }
 
   return nVersion;
 }
 
 exports = {
-  name: ['update'],
-  description: 'Update your thrust',
+  name: ['upgrade'],
+  description: 'Upgrade your thrust',
   args: [{
     name: 'version',
     description: 'Version to be installed'
   }],
   options: [],
-  runner: runUpdate
+  runner: runUpgrade
 }
