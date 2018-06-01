@@ -1,4 +1,4 @@
-var cliProcessor = require('./cliProcessor');
+var cliProcessor = require('./cliProcessor.js');
 
 function runCLI (args) {
   var commandInfo = processCLI(args);

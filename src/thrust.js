@@ -230,8 +230,10 @@ function resolvePossibleFileNames(env, fileName) {
             fileName = 'thrust-bitcodes/' + fileName;
         }
 
-        possibleFileNames.push(fileName + File.separator + 'index.js');
-        possibleFileNames.push(fileName.concat('.js'));
+        if (env.includeAppDependencies) {
+            possibleFileNames.push(fileName + File.separator + 'index.js');
+            possibleFileNames.push(fileName.concat('.js'));
+        }
     }
 
     return possibleFileNames;
@@ -247,8 +249,10 @@ function resolvePossibleFilePaths(env, fileName) {
     } else if (relativeRequire) {
         possiblePaths.push(env.requireCurrentDirectory);
     } else {
-        // application bitcodes
-        possiblePaths.push(env.appRootDirectory + File.separator + '.lib' + File.separator + 'bitcodes');
+        if (env.includeAppDependencies) {
+            // application bitcodes
+            possiblePaths.push(env.appRootDirectory + File.separator + '.lib' + File.separator + 'bitcodes');
+        }
 
         // core bitcodes
         possiblePaths.push(_thrustDir.getPath() + File.separator + 'core');
@@ -384,6 +388,7 @@ function thrust(args) {
     var env = {}
     var currDir = ''
 
+    env.includeAppDependencies = true;
     env.engine = new ScriptEngineManager().getEngineByName("nashorn")
     env.cacheScript = {}
 
@@ -412,9 +417,8 @@ function thrust(args) {
     env.libRootDirectory = env.appRootDirectory + '/.lib';
     env.bitcodesDirectory = env.appRootDirectory + '/.lib/bitcodes';
 
-    if (hasStartupFile) {
-        env.config = JSON.parse(getFileContent(currDir + '/config.json'));
-    }
+    var configPath = hasStartupFile ? currDir : _thrustDir.getPath();
+    env.config = JSON.parse(getFileContent(configPath + '/config.json'));
 
     createGlobalContext(env);
 
@@ -426,7 +430,9 @@ function thrust(args) {
     if (hasStartupFile) {
         require.call(env, './' + startupFile.getName())
     } else {
-        require.call(env, './cli/cli').runCLI(args);
+        env.requireCurrentDirectory = _thrustDir.getPath();
+        env.includeAppDependencies = false;
+        require.call(env, './cli/cli.js').runCLI(args);
     }
 }
 

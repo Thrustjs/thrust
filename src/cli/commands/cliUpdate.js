@@ -2,7 +2,7 @@ var File = Java.type('java.io.File')
 var Files = Java.type('java.nio.file.Files')
 
 var fs = require('fs')
-var repoDownloder = require('../../util/repoDownloader')
+var repoDownloder = require('../../util/repoDownloader.js')
 
 var THRUST_REPO = 'Thrustjs/thrust';
 

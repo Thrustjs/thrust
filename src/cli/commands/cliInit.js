@@ -2,8 +2,8 @@ var File = Java.type('java.io.File')
 var Files = Java.type('java.nio.file.Files')
 
 var fs = require('fs')
-var repoDownloder = require('../../util/repoDownloader');
-var Constants = require('../../util/constants');
+var repoDownloder = require('../../util/repoDownloader.js');
+var Constants = require('../../util/constants.js');
 var cliInstall = require('./cliInstall.js');
 
 function runInit (runInfo) {

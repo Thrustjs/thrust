@@ -4,8 +4,8 @@ var Paths = Java.type('java.nio.file.Paths')
 var URL = Java.type('java.net.URL')
 
 var fs = require('fs')
-var repoDownloder = require('../../util/repoDownloader')
-var Constants = require('../../util/constants');
+var repoDownloder = require('../../util/repoDownloader.js')
+var Constants = require('../../util/constants.js');
 
 function log (str) {
   java.lang.System.out.print(str);
