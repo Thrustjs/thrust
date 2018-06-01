@@ -1,3 +1,3 @@
-exports = function () {
-  return 'value';
+exports = function (arg) {
+  return arg || 'value';
 };

@@ -50,23 +50,23 @@ exports = function exec (describe, it, beforeEach, afterEach, expect, should, as
       });
     });
 
-    describe('update', function () {
-      it('update', function () {
-        var commandInfo = cli('update');
+    describe('upgrade', function () {
+      it('upgrade', function () {
+        var commandInfo = cli('upgrade');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
-          'name': 'update',
+          'name': 'upgrade',
           'args.version': undefined
         });
       });
 
-      it('update com versão', function () {
-        var commandInfo = cli('update 5.0');
+      it('upgrade com versão', function () {
+        var commandInfo = cli('upgrade 5.0');
 
         expect(commandInfo).to.be.an('object');
         expect(commandInfo.argsMD).to.nested.include({
-          'name': 'update',
+          'name': 'upgrade',
           'args.version': '5.0'
         });
       });

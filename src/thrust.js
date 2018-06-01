@@ -155,17 +155,21 @@ function getConfig(env) {
 
 function injectMonitoring(fncMonitoring) {
     var ths = this
-    var novo = {}
+    
+    if (ths.constructor.name === 'Function') {
+        return fncMonitoring.bind(null, ths)
+    } else {
+        var novo = {};
+        Object.keys(ths).forEach(function (prop) {
+            if (ths[prop].constructor.name === 'Function') {
+                novo[prop] = fncMonitoring.bind(null, ths[prop])
+            } else {
+                novo[prop] = ths[prop]
+            }
+        })
 
-    Object.keys(ths).forEach(function (prop) {
-        if (ths[prop].constructor.name === 'Function') {
-            novo[prop] = fncMonitoring.bind(null, ths[prop])
-        } else {
-            novo[prop] = ths[prop]
-        }
-    })
-
-    return novo
+        return novo
+    }
 }
 
 function createGlobalContext(env) {
@@ -293,14 +297,19 @@ function require(filename) {
     }
 
     // TODO: Verificar
-    if (result && (typeof result === 'object')) {
-        result = Object.assign({}, result)
-        Object.defineProperty(result, 'monitoring', {
-            enumerable: false,
-            configurable: false,
-            writable: true,
-            value: injectMonitoring
-        })
+    if (result) {
+        if (typeof result === 'object') {
+            result = Object.assign({}, result)
+            
+            Object.defineProperty(result, 'monitoring', {
+                enumerable: false,
+                configurable: false,
+                writable: true,
+                value: injectMonitoring
+            })
+        } else if (typeof result === 'function') {
+            result.monitoring = injectMonitoring;
+        }
     }
 
     env.cacheScript[resolvedFile] = (env.config && env.config.cacheScript) ? result : undefined;
@@ -382,6 +391,8 @@ function buildThrustEnv(args) {
 
 function thrust(args) {
     System.setProperty('thrust.dir', _thrustDir.getPath());
+    System.setProperty("nashorn.args", "--language=es6");
+    System.setProperty("java.security.egd", "file:/dev/urandom");
 
     load(_pollyFillsPath)
 

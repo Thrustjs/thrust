@@ -86,6 +86,22 @@ exports = function exec(describe, it, beforeEach, afterEach, expect, should, ass
       expect(this.name).to.equal('index.js')
     });
 
+    it('Deve injetar monitoria nas funções de objetos exportados', function () {
+      var lib = require('./require/utilEcho').monitoring(function(origFn, value) {
+        return origFn(value) + ':intercepted';
+      });
+      
+      expect(lib.echo('teste')).to.equals('teste:intercepted');
+    });
+
+    it('Deve injetar monitoria em uma função exportada', function () {
+      var libFn = require('./require/utilFn').monitoring(function(origFn, value) {
+        return origFn(value) + ':intercepted';
+      });
+      
+      expect(libFn('teste')).to.equals('teste:intercepted');
+    });
+
     it('Não deve ser possível utilizar globais do thrust.js', function () {
       expect(function () {
         return _thrustDir.getPath(); // eslint-disable-line no-undef
