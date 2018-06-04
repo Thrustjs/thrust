@@ -80,6 +80,15 @@ exports = function exec(describe, it, beforeEach, afterEach, expect, should, ass
       expect(require('./require/utilWithGlobal').getValue()).to.equals('globalBitCode2')
     });
 
+    it('Deve conseguir rodar um foreach com declaração de variável como let', function () {
+      expect(require('./require/utilLetIterProblem.js').iterar()).to.equals(true)
+    });
+
+    it('Deve retornar true ao comparar o mesmo objeto', function () {
+      var a = {}
+      expect(require('./require/utilStrictEquals.js')(a, a)).to.equals(true)
+    });
+
     it('Deve possuir isolação de contextos', function () {
       this.name = 'index.js';
       require('./require/utilCtxIsolation')
