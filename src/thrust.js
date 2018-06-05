@@ -177,7 +177,7 @@ function createGlobalContext(env) {
     var polyfills = getFileContent(_pollyFillsPath);
 
     globalContext.setAttribute('env', getEnv.bind(env), ScriptContext.ENGINE_SCOPE)
-    globalContext.setAttribute('loadJar', loadJar, ScriptContext.ENGINE_SCOPE)
+    globalContext.setAttribute('loadJar', loadJar.bind(env), ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('getConfig', getConfig.bind(null, env), ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('getBitcodeConfig', getBitcodeConfig.bind(null, env), ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('require', require.bind(env), ScriptContext.ENGINE_SCOPE)
