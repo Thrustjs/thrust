@@ -185,6 +185,9 @@ function createGlobalContext(env) {
     globalContext.setAttribute('exports', {}, ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('dangerouslyLoadToGlobal', dangerouslyLoadToGlobal.bind(env), ScriptContext.ENGINE_SCOPE)
 
+    //TODO: Remover no release oficial
+    globalContext.setAttribute('loadToGlobal', dangerouslyLoadToGlobal.bind(env), ScriptContext.ENGINE_SCOPE)
+
     env.engine.eval(polyfills, globalContext);
 
     env.globalContext = globalContext;
@@ -289,8 +292,13 @@ function require(filename) {
         var requireContext = new SimpleScriptContext();
         requireContext.setBindings(env.globalContext.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE);
 
-        var scriptPrefix = '(function() {var exports = {};\t'
-        var scriptSuffix = '\nreturn exports;\t})()\t//# sourceURL=' + resolvedFile
+        //TODO: Remover no release oficial
+        var scriptPrefix = '(function() {var exports = {};var module={exports: exports};\t'
+        var scriptSuffix = '\nif (exports !== module.exports) {for (var att in module.exports) {exports[att] = module.exports[att];}}\nreturn exports;\t})()\t//# sourceURL=' + resolvedFile
+        
+        // var scriptPrefix = '(function() {var exports = {};\t'
+        // var scriptSuffix = '\nreturn exports;\t})()\t//# sourceURL=' + resolvedFile
+       
         result = env.engine.eval(scriptPrefix + moduleContent + scriptSuffix, requireContext)
     } finally {
         env.requireCurrentDirectory = reqCurDirBak

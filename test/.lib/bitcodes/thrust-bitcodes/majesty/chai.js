@@ -8,9 +8,9 @@
 
     // // NERY >>>
 
-     if (typeof exports === "object" /* && typeof module == "undefined" */) {
-       g = exports
-     } else
+    //  if (typeof exports === "object" /* && typeof module == "undefined" */) {
+    //    g = exports
+    //  } else
 
     // // NERY <<<
 
