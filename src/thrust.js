@@ -183,10 +183,10 @@ function createGlobalContext(env) {
     globalContext.setAttribute('require', require.bind(env), ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('rootPath', env.appRootDirectory, ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('exports', {}, ScriptContext.ENGINE_SCOPE)
-    globalContext.setAttribute('dangerouslyLoadToGlobal', dangerouslyLoadToGlobal.bind(env), ScriptContext.ENGINE_SCOPE)
+    globalContext.setAttribute('dangerouslyLoadToGlobal', dangerouslyLoadToGlobal.bind(null, env), ScriptContext.ENGINE_SCOPE)
 
     //TODO: Remover no release oficial
-    globalContext.setAttribute('loadToGlobal', dangerouslyLoadToGlobal.bind(env), ScriptContext.ENGINE_SCOPE)
+    globalContext.setAttribute('loadToGlobal', dangerouslyLoadToGlobal.bind(null, env), ScriptContext.ENGINE_SCOPE)
 
     env.engine.eval(polyfills, globalContext);
 
