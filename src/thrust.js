@@ -1,3 +1,4 @@
+var ThreadLocal = Java.type("java.lang.ThreadLocal");
 var ClassLoader = Java.type("java.lang.ClassLoader")
 var File = Java.type('java.io.File')
 var Files = Java.type('java.nio.file.Files')
@@ -17,6 +18,10 @@ var _thrustDir = new File(__DIR__);
 var _self = this;
 var _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js';
 var _thrustEnv;
+
+// Essa variável é usada para controlar o path atual do require, para que seja possível
+// fazer require de "./" dentro de um bitcode por exemplo.
+var _requireCurrentDirectory = new ThreadLocal();
 
 function getFileContent(fullPath) {
     return new JString(Files.readAllBytes(Paths.get(fullPath)))
@@ -71,7 +76,7 @@ function loadJar(jarName) { // eslint-disable-line
     var searchPath;
 
     if (jarName.startsWith('./') || jarName.startsWith('../')) {
-        searchPath = env.requireCurrentDirectory || env.appRootDirectory
+        searchPath = _requireCurrentDirectory.get() || env.appRootDirectory
     } else {
         searchPath = env.appRootDirectory + File.separator + '.lib' + File.separator + 'jars';
     }
@@ -155,7 +160,7 @@ function getConfig(env) {
 
 function injectMonitoring(fncMonitoring) {
     var ths = this
-    
+
     if (ths.constructor.name === 'Function') {
         return fncMonitoring.bind(null, ths)
     } else {
@@ -193,9 +198,9 @@ function createGlobalContext(env) {
     env.globalContext = globalContext;
 }
 
-function resolveWichScriptFileToRequire(env, fileName) {
+function resolveWichScriptFileToRequire(env, fileName, requireCurrentDirectory) {
+    var possiblePaths = resolvePossibleFilePaths(env, fileName, requireCurrentDirectory);
     var possibleFileNames = resolvePossibleFileNames(env, fileName);
-    var possiblePaths = resolvePossibleFilePaths(env, fileName);
 
     var scriptFile;
 
@@ -246,7 +251,7 @@ function resolvePossibleFileNames(env, fileName) {
     return possibleFileNames;
 }
 
-function resolvePossibleFilePaths(env, fileName) {
+function resolvePossibleFilePaths(env, fileName, requireCurrentDirectory) {
     var relativeRequire = fileName.startsWith('./') || fileName.startsWith('../');
     var relativeToRootRequire = fileName.startsWith('/');
     var possiblePaths = [];
@@ -254,7 +259,7 @@ function resolvePossibleFilePaths(env, fileName) {
     if (relativeToRootRequire) {
         possiblePaths.push(env.appRootDirectory);
     } else if (relativeRequire) {
-        possiblePaths.push(env.requireCurrentDirectory);
+        possiblePaths.push(requireCurrentDirectory || env.appRootDirectory);
     } else {
         if (env.includeAppDependencies) {
             // application bitcodes
@@ -271,7 +276,9 @@ function resolvePossibleFilePaths(env, fileName) {
 function require(filename) {
     var env = this
 
-    var resolvedFile = resolveWichScriptFileToRequire(env, filename)
+    var requireCurrentDirectory = _requireCurrentDirectory.get()
+
+    var resolvedFile = resolveWichScriptFileToRequire(env, filename, requireCurrentDirectory)
 
     if (env.cacheScript[resolvedFile] !== undefined) {
         return env.cacheScript[resolvedFile]
@@ -283,32 +290,31 @@ function require(filename) {
         return JSON.parse(moduleContent)
     }
 
-    var reqCurDirBak = env.requireCurrentDirectory
     var result
 
-    env.requireCurrentDirectory = new File(resolvedFile).getAbsoluteFile().getParent().replace(/\.$/, '')
-
     try {
+        _requireCurrentDirectory.set(new File(resolvedFile).getAbsoluteFile().getParent().replace(/\.$/, ''));
+
         var requireContext = new SimpleScriptContext();
         requireContext.setBindings(env.globalContext.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE);
 
         //TODO: Remover no release oficial
         var scriptPrefix = '(function() {var exports = {};var module={exports: exports};\t'
         var scriptSuffix = '\nif (exports !== module.exports) {for (var att in module.exports) {exports[att] = module.exports[att];}}\nreturn exports;\t})()\t//# sourceURL=' + resolvedFile
-        
+
         // var scriptPrefix = '(function() {var exports = {};\t'
         // var scriptSuffix = '\nreturn exports;\t})()\t//# sourceURL=' + resolvedFile
-       
+
         result = env.engine.eval(scriptPrefix + moduleContent + scriptSuffix, requireContext)
     } finally {
-        env.requireCurrentDirectory = reqCurDirBak
+        _requireCurrentDirectory.set(requireCurrentDirectory);
     }
 
     // TODO: Verificar
     if (result) {
         if (typeof result === 'object') {
             result = Object.assign({}, result)
-            
+
             Object.defineProperty(result, 'monitoring', {
                 enumerable: false,
                 configurable: false,
@@ -425,7 +431,6 @@ function thrust(args) {
     currDir = hasStartupFile ? startupFile.getAbsoluteFile().getParent() : new File('').getAbsolutePath();
 
     env.appRootDirectory =
-        env.requireCurrentDirectory =
         currDir = currDir
             .replace(/\\\.\\/g, '\\')
             .replace(/\/\/.\//g, '/')
@@ -442,14 +447,15 @@ function thrust(args) {
     createGlobalContext(env);
 
     if (hasStartupFile) {
+        _requireCurrentDirectory.set(currDir);
+
         loadRuntimeJars(env)
         loadGlobalBitCodes(env);
-    }
 
-    if (hasStartupFile) {
         require.call(env, './' + startupFile.getName())
     } else {
-        env.requireCurrentDirectory = _thrustDir.getPath();
+        _requireCurrentDirectory.set(_thrustDir.getPath());
+
         env.includeAppDependencies = false;
         require.call(env, './cli/cli.js').runCLI(args);
     }
