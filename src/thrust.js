@@ -155,7 +155,10 @@ function dangerouslyLoadToGlobal(env, name, obj) {
 }
 
 function getConfig(env) {
-    return Object.assign({}, env.config)
+    //TODO: Remover no release oficial
+    return env.config;
+
+    //return Object.assign({}, env.config)
 }
 
 function injectMonitoring(fncMonitoring) {
