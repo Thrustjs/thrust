@@ -20,11 +20,11 @@ repositories {
 }
 
 ospackage {
-    packageName = 'thrust-jjs'
+    packageName = 'thrust'
     os = LINUX
     user = 'root'
 
-    into '/opt/thrust-jjs'
+    into '/opt/thrust'
 
     from('src') {
         into 'lib'
@@ -35,7 +35,7 @@ ospackage {
         fileMode = 0755
     }
 
-    link('/usr/local/bin/thrust-jjs', '/opt/thrust-jjs/bin/thrust.sh')
+    link('/usr/local/bin/thrust', '/opt/thrust/bin/thrust.sh')
 }
 
 clean {
