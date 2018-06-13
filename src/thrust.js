@@ -153,7 +153,7 @@ function dangerouslyLoadToGlobal(env, name, obj) {
 }
 
 function getConfig(env) {
-    return Object.assign({}, env.config)
+    return env.config;
 }
 
 function injectMonitoring(fncMonitoring) {
@@ -400,9 +400,9 @@ function thrust(args) {
 
     try {
         let configPath = hasStartupFile ? currDir : _thrustDir.getPath()
-        env.config = JSON.parse(getFileContent(configPath + '/config.json'))
+        env.config = Object.freeze(JSON.parse(getFileContent(configPath + '/config.json')));
     } catch(e) {
-        env.config = {};
+        env.config = Object.freeze({});
     }
 
     createGlobalContext(env)

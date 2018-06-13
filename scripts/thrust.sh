@@ -24,4 +24,4 @@ if [ "${DEBUG}" != "" ]; then
     ncdbg &>/dev/null &
 fi
 
-eval jjs --language=es6 $DEBUG /opt/thrust/lib/thrust.js -- $*
+eval jjs -strict --language=es6 $DEBUG /opt/thrust/lib/thrust.js -- $*

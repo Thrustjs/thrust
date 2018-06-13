@@ -338,7 +338,7 @@ var onTaskFinished = function () {
     phaser.arriveAndDeregister();
 };
 
-setTimeout = function (fn, millis /* [, args...] */) {
+function setTimeout(fn, millis /* [, args...] */) {
     var args = [].slice.call(arguments, 2, arguments.length);
 
     timer = (timer === undefined) ? new Timer('jsEventLoop', false) : timer
@@ -370,11 +370,11 @@ setTimeout = function (fn, millis /* [, args...] */) {
     };
 };
 
-clearTimeout = function (cancel) {
+function clearTimeout(cancel) {
     cancel();
 };
 
-setInterval = function (fn, delay /* [, args...] */) {
+function setInterval(fn, delay /* [, args...] */) {
     var args = [].slice.call(arguments, 2, arguments.length);
 
     var cancel = null;
@@ -390,6 +390,6 @@ setInterval = function (fn, delay /* [, args...] */) {
     };
 };
 
-clearInterval = function (cancel) {
+function clearInterval(cancel) {
     cancel();
 };

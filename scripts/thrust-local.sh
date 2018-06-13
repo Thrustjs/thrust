@@ -26,5 +26,5 @@ if [ "${DEBUG}" != "" ]; then
 fi
 
 # Running thrust with jjs
-eval jjs --language=es6 $DEBUG $BASEDIR/../src/thrust.js -- $*
+eval jjs -strict --language=es6 $DEBUG $BASEDIR/../src/thrust.js -- $*
 
