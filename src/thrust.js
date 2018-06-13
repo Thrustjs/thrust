@@ -145,7 +145,7 @@ function classLoadJar(jarPath) {
 * @param {String} name - Nome que será colocado no contexto global.
 * @param {String} name - Objeto que será colocado no contexto global.
 *
-* @code loadToGlobal('db', {teste: 1})
+* @code dangerouslyLoadToGlobal('db', {teste: 1})
 * @code print(db.teste) //Saída 1
 */
 function dangerouslyLoadToGlobal(env, name, obj) {

@@ -170,8 +170,11 @@ Para realizar o debug do thrust siga os seguintes passos:
  - Novo método env, para carga de configurações do environment, argumentos da linha de comando e config.json
  - Diversas melhorias no sistema de require
  - Função de monitoria nos retornos do require
+ - Função `loadToGlobal` teve seu nome alterado para `dangerouslyLoadToGlobal`
+ - Função require agora lança exceção caso o arquivo solicitado não seja encontrado.
 
-* **v0.4.0** - Feature: Versionamento de bitcodes
+* **v0.4.0**
+- Feature: Versionamento de bitcodes
 Agora é possível versionar os seus bitcodes instalados, você pode instalar novamente informando a versão ou modificar diretamente em seu brief.json e rodando o install novamente.
 
 Ex:

@@ -23,6 +23,11 @@ exports = function exec(describe, it, beforeEach, afterEach, expect, should, ass
       expect(index.value).to.equals('folder/index');
     });
 
+    it('Deve ser possível fazer require sem a extensão js', function () {
+      var value = require('./require/utilConst');
+      expect(value).to.equals('value');
+    });
+
     it('Deve ser possível fazer um require de bitcode core', function () {
       var fs = require('fs');
       expect(typeof fs.exists).to.equals('function');
