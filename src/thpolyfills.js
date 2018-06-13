@@ -4,6 +4,10 @@ var JString = java.lang.String
 var Paths = Java.type('java.nio.file.Paths')
 var StandardCharsets = Java.type('java.nio.charset.StandardCharsets')
 
+function log (str) {
+    java.lang.System.out.print(str);
+  }
+
 function show() {
     var args = Array.prototype.slice.call(arguments).map(function (arg) {
         return (arg && arg.constructor && (arg.constructor.name == "Array" || arg.constructor.name === "Object"))
