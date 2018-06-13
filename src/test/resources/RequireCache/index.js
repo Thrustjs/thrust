@@ -1,2 +1,0 @@
-require("./bitcode") 
-require("./bitcode")

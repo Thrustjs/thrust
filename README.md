@@ -1,4 +1,5 @@
-Thrust [![Build Status](https://travis-ci.org/Thrustjs/thrust.svg?branch=master)](https://travis-ci.org/Thrustjs/thrust)
+Thrust
+[![Build Status](https://travis-ci.org/Thrustjs/thrust.svg?branch=master)](https://travis-ci.org/Thrustjs/thrust) [![GitHub release](https://img.shields.io/github/release/thrustjs/thrust.svg)](https://github.com/Thrustjs/thrust/releases) [![GitHub downloads](https://img.shields.io/github/downloads/thrustjs/thrust/total.svg)](https://github.com/Thrustjs/thrust/releases)
 ===============
 
 O *thrust* (ou *thrustjs*) é uma plataforma de execução/interpretação JavaScript, ou seja, é um Server-side JavaScript (SSJS). Ele permite a escrita de código em JavaScript a ser executado sobre a Java Virtual Machine (JVM).
@@ -86,10 +87,10 @@ function loadJar(jarName)
 * @param {String} name - Nome que será colocado no contexto global.
 * @param {String} name - Objeto que será colocado no contexto global.
 *
-* @code loadToGlobal('db', {teste: 1})
+* @code dangerouslyLoadToGlobal('db', {teste: 1})
 * @code print(db.teste) //Saída: 1
 */
-function loadToGlobal(name, obj)
+function dangerouslyLoadToGlobal(name, obj)
 
 /**
 * Usado para pegar o JSON de configuração (config.json)
@@ -136,14 +137,39 @@ As propriedades abaixo devem ser configuradas no arquivo *config.json* (distribu
 ``` javascript
 /* Os valores abaixo representam os valores default*/
 {
-  "loadToGlobal": [],/*String/Array Bitcodes que devem ser carregados globalmente*/
-  "developmentMode": false, /*Determina se o ambiente é de desenvolviment ou não (desabilita cache dp require)*/
-  "cacheScript": false, /*Liga ou desliga o cache do require*/
+  "loadToGlobal": [], /*String/Array Bitcodes que devem ser carregados globalmente*/
+  "cacheScript": false, /*Liga ou desliga o cache de require*/
 }
 ```
 
+# Debug no VSCode
+
+Para realizar o debug do thrust siga os seguintes passos:
+
+1 -Baixe o seguinte projeto, extraria e o coloque sua pasta `bin` no path de seu SO: [NCDbg](https://github.com/provegard/ncdbg/releases/tag/0.8.0)
+
+2 - No Visual Studio Code, instale a extensão [Debugger for Chrome](https://marketplace.visualstudio.com/items?itemName=msjsdiag.debugger-for-chrome) e reinicie o mesmo.
+
+3 - Adicione o arquivo de configuração de execução do VSCode, em `.vscode/launch.json`. (Copie o deste repositório)
+
+4 - Coloque as instruções de `debugger;` em seu código.
+
+5 - Inicie sua aplicação com `thrust arquivo.js --debug`
+
+6 - A execução ficará aguardando conexão do debug para prosseguir, então na aba `Debug` do VSCode, inicie a execução de `Attach to NCDbg`
+
 ---
+
 ## What's new
+
+* **v0.5.0**
+ - Alteramos o core do thrust para que o mesmo seja executado diretamente pelo jjs, agora contamos um código 100% Javascript.
+ - Diversas melhorias no sistema de CLI, incluindo help geral e de todos os comandos, além do novo comando "upgrade".
+ - Inclusão do modo debug, vide README para mais detalhes.
+ - Incorporado bitcode 'fs' dentro do core, agora não é necessário instalar a dependência 'filesystem'.
+ - Novo método env, para carga de configurações do environment, argumentos da linha de comando e config.json
+ - Diversas melhorias no sistema de require
+ - Função de monitoria nos retornos do require
 
 * **v0.4.0** - Feature: Versionamento de bitcodes
 Agora é possível versionar os seus bitcodes instalados, você pode instalar novamente informando a versão ou modificar diretamente em seu brief.json e rodando o install novamente.

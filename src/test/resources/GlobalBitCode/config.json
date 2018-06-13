@@ -1,4 +1,0 @@
-{
-	"transpileScripts": false,
-	"loadToGlobal": ["thrust-bitcodes/globalBitCode1", "globalBitCode2"]
-}

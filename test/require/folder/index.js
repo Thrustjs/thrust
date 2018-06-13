@@ -1,0 +1,3 @@
+exports = {
+    value: 'folder/index'
+}
