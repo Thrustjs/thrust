@@ -239,7 +239,8 @@ function installBitcodes (installDir, bitcodesToInstall) {
 		
 		if (dependencies) {
 			if (Array.isArray(dependencies)) { //An array deps is only bitcode dependencies
-				installBitcodes(installDir, dependencies)
+        print()
+        installBitcodes(installDir, dependencies)
 			} else {
 				print()
 				if (Array.isArray(dependencies.jars)) { //jar dependencies
