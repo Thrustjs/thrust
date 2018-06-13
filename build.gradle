@@ -42,12 +42,18 @@ clean {
     file('build').delete();
 }
 
+task preTest(type: Exec) {
+    workingDir './test'
+    commandLine '../scripts/thrust-local.sh', 'install'
+}
+
 task test(type: Exec) {
     workingDir './test'
     commandLine '../scripts/thrust-local.sh', 'test.js'
 }
 
 test.dependsOn clean
+test.dependsOn preTest
 build.dependsOn test
 build.finalizedBy buildRpm
 build.finalizedBy buildDeb
