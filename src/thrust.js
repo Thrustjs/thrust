@@ -1,10 +1,9 @@
-var ThreadLocal = Java.type("java.lang.ThreadLocal");
+var ThreadLocal = Java.type("java.lang.ThreadLocal")
 var ClassLoader = Java.type("java.lang.ClassLoader")
 var File = Java.type('java.io.File')
 var Files = Java.type('java.nio.file.Files')
 var JString = Java.type('java.lang.String')
 var Paths = Java.type('java.nio.file.Paths')
-var StandardCharsets = Java.type('java.nio.charset.StandardCharsets')
 var ScriptContext = Java.type('javax.script.ScriptContext')
 var ScriptEngine = Java.type('javax.script.ScriptEngine')
 var ScriptEngineManager = Java.type('javax.script.ScriptEngineManager')
@@ -14,76 +13,75 @@ var System = Java.type('java.lang.System')
 var URL = Java.type("java.net.URL")
 var URLClassLoader = Java.type("java.net.URLClassLoader")
 
-var _thrustDir = new File(__DIR__);
-var _self = this;
-var _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js';
-var _thrustEnv;
+const _thrustDir = new File(__DIR__)
+const _self = this
+const _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js'
+let _thrustEnv
 
 // Essa variável é usada para controlar o path atual do require, para que seja possível
 // fazer require de "./" dentro de um bitcode por exemplo.
-var _requireCurrentDirectory = new ThreadLocal();
+const _requireCurrentDirectory = new ThreadLocal()
 
 function getFileContent(fullPath) {
     return new JString(Files.readAllBytes(Paths.get(fullPath)))
 }
-
 function loadRuntimeJars(env) {
-    var jarLibDir = Paths.get(env.libRootDirectory, "jars").toFile()
+    const jarLibDir = Paths.get(env.libRootDirectory, "jars").toFile()
 
     if (jarLibDir.exists()) {
-        var jarLibFileNames = Java.from(jarLibDir.listFiles()).filter(function (file) {
-            return file.isFile();
+        const jarLibFileNames = Java.from(jarLibDir.listFiles()).filter(function (file) {
+            return file.isFile()
         }).map(function (file) {
-            return file.getName();
-        });
+            return file.getName()
+        })
 
         if (jarLibFileNames.length) {
             jarLibFileNames.forEach(function (libFileName) {
-                loadJar.call(env, libFileName);
-            });
+                loadJar.call(env, libFileName)
+            })
         }
     }
 }
 
 function loadGlobalBitCodes(env) {
-    var bitCodeNames = getConfig(env).loadToGlobal;
+    const bitCodeNames = getConfig(env).loadToGlobal
 
     if (bitCodeNames) {
-        var bitList;
+        let bitList
 
         if (typeof bitCodeNames === 'string') {
-            bitList = [bitCodeNames.trim()];
+            bitList = [bitCodeNames.trim()]
         } else if (Array.isArray(bitCodeNames)) {
             bitList = bitCodeNames.map(function (name) {
-                return name.trim();
-            });
+                return name.trim()
+            })
         } else {
-            throw new Error('loadToGlobal property must be a string or an array.');
+            throw new Error('loadToGlobal property must be a string or an array.')
         }
 
         bitList.forEach(function (bitCodeName) {
-            var firstIndexToSearch = bitCodeName.lastIndexOf('/') > -1 ? bitCodeName.lastIndexOf('/') + 1 : 0;
-            var bitCodeExportName = bitCodeName.substring(firstIndexToSearch, bitCodeName.length());
+            const firstIndexToSearch = bitCodeName.lastIndexOf('/') > -1 ? bitCodeName.lastIndexOf('/') + 1 : 0
+            const bitCodeExportName = bitCodeName.substring(firstIndexToSearch, bitCodeName.length())
 
-            dangerouslyLoadToGlobal(env, bitCodeExportName, require.call(env, bitCodeName));
-        });
+            dangerouslyLoadToGlobal(env, bitCodeExportName, require.call(env, bitCodeName))
+        })
     }
 }
 
 function loadJar(jarName) { // eslint-disable-line
-    var env = this;
+    const env = this
 
-    var searchPath;
+    let searchPath
 
     if (jarName.startsWith('./') || jarName.startsWith('../')) {
         searchPath = _requireCurrentDirectory.get() || env.appRootDirectory
     } else {
-        searchPath = env.appRootDirectory + File.separator + '.lib' + File.separator + 'jars';
+        searchPath = env.appRootDirectory + File.separator + '.lib' + File.separator + 'jars'
     }
 
-    var jarPath = searchPath + File.separator + jarName;
+    const jarPath = searchPath + File.separator + jarName
 
-    classLoadJar(jarPath);
+    classLoadJar(jarPath)
 }
 
 /**
@@ -95,45 +93,45 @@ function loadJar(jarName) { // eslint-disable-line
 * @code env('PORT', 8778)
 */
 function getEnv(name, defaultValue) {
-    var env = this;
+    const env = this
 
     if (arguments.length == 0) {
-        return Object.assign({}, env.thrustEnv);
+        return Object.assign({}, env.thrustEnv)
     }
 
-    var value = env.thrustEnv[name];
+    let value = env.thrustEnv[name]
 
     if (isEmpty(value)) {
-        value = recursiveGet(getConfig(env), name);
+        value = recursiveGet(getConfig(env), name)
     }
 
-    return isEmpty(value) ? defaultValue : value;
+    return isEmpty(value) ? defaultValue : value
 }
 
 function recursiveGet(obj, name) {
     if (name.indexOf('.') === -1) {
-        return obj[name];
+        return obj[name]
     }
 
-    var propertyPath = name.split('.');
+    let propertyPath = name.split('.')
     return propertyPath.reduce(function (result, currProp) {
-        return isEmpty(result) ? undefined : result[currProp];
+        return isEmpty(result) ? undefined : result[currProp]
     }, obj)
 }
 
 function isEmpty(value) {
-    return (value == null || typeof value === 'undefined');
+    return (value == null || typeof value === 'undefined')
 }
 
 function classLoadJar(jarPath) {
     try {
-        var jarFile = new File(jarPath);
+        const jarFile = new File(jarPath)
 
         if (jarFile.exists()) {
-            var method = URLClassLoader.class.getDeclaredMethod('addURL', [URL.class]);
+            const method = URLClassLoader.class.getDeclaredMethod('addURL', [URL.class])
 
-            method.setAccessible(true);
-            method.invoke(ClassLoader.getSystemClassLoader(), [jarFile.toURI().toURL()]);
+            method.setAccessible(true)
+            method.invoke(ClassLoader.getSystemClassLoader(), [jarFile.toURI().toURL()])
         } else {
             throw new Error('File not found')
         }
@@ -155,19 +153,16 @@ function dangerouslyLoadToGlobal(env, name, obj) {
 }
 
 function getConfig(env) {
-    //TODO: Remover no release oficial
-    return env.config;
-
-    //return Object.assign({}, env.config)
+    return Object.assign({}, env.config)
 }
 
 function injectMonitoring(fncMonitoring) {
-    var ths = this
+    const ths = this
 
     if (ths.constructor.name === 'Function') {
         return fncMonitoring.bind(null, ths)
     } else {
-        var novo = {};
+        const novo = {}
         Object.keys(ths).forEach(function (prop) {
             if (ths[prop].constructor.name === 'Function') {
                 novo[prop] = fncMonitoring.bind(null, ths[prop])
@@ -181,8 +176,8 @@ function injectMonitoring(fncMonitoring) {
 }
 
 function createGlobalContext(env) {
-    var globalContext = new SimpleScriptContext();
-    var polyfills = getFileContent(_pollyFillsPath);
+    const globalContext = new SimpleScriptContext()
+    const polyfills = getFileContent(_pollyFillsPath)
 
     globalContext.setAttribute('env', getEnv.bind(env), ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('loadJar', loadJar.bind(env), ScriptContext.ENGINE_SCOPE)
@@ -193,127 +188,86 @@ function createGlobalContext(env) {
     globalContext.setAttribute('exports', {}, ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('dangerouslyLoadToGlobal', dangerouslyLoadToGlobal.bind(null, env), ScriptContext.ENGINE_SCOPE)
 
-    //TODO: Remover no release oficial
-    globalContext.setAttribute('loadToGlobal', dangerouslyLoadToGlobal.bind(null, env), ScriptContext.ENGINE_SCOPE)
+    env.engine.eval(polyfills, globalContext)
 
-    env.engine.eval(polyfills, globalContext);
-
-    env.globalContext = globalContext;
+    env.globalContext = globalContext
 }
 
+/* Premissas
+fs -> $appPath/.lib/bitcodes/thrust-bitcodes/fs/index.js || $thrustDir/core/fs.js
+org/bitcode -> $appPath/.lib/bitcodes/org/bitcode/index.js
+
+/app/util/string -> $appPath/app/util/string.js || $appPath/app/util/string/index.js
+
+./child -> $currDirectory/child.js || $currDirectory/child/index.js
+../parent -> $currDirectory/parent.js || $currDirectory/parent/index.js
+*/
 function resolveWichScriptFileToRequire(env, fileName, requireCurrentDirectory) {
-    var possiblePaths = resolvePossibleFilePaths(env, fileName, requireCurrentDirectory);
-    var possibleFileNames = resolvePossibleFileNames(env, fileName);
+    let moduleDirectory
+    let moduleName = fileName.replace(/^\.\\|^\.\//, '')
 
-    var scriptFile;
-
-    possiblePaths.every(function (basePath) {
-        return possibleFileNames.every(function (possibleName) {
-            var scriptPath = basePath + File.separator + possibleName;
-
-            var currentFile = new File(scriptPath);
-
-            if (currentFile.exists()) {
-                scriptFile = scriptPath;
-                return false;
-            }
-
-            return true;
-        })
-    });
-
-    if (!scriptFile) {
-        throw new Error("Cannot load '" + fileName + "'");
-    }
-
-    return scriptFile;
-}
-
-function resolvePossibleFileNames(env, fileName) {
-    var possibleFileNames = [];
-
-    if (fileName.endsWith('.js') || fileName.endsWith('.json')) {
-        possibleFileNames.push(fileName);
+    if (fileName.startsWith('/')) {
+        moduleDirectory = env.appRootDirectory
+    } else if (fileName.startsWith('./') || fileName.startsWith('../')) {
+        moduleDirectory = requireCurrentDirectory || env.appRootDirectory
+    } else if (moduleName.indexOf('/') == -1) {
+        moduleDirectory = env.bitcodesDirectory + '/thrust-bitcodes'
     } else {
-        var isAbstract = fileName.match(/^(\.\/|\.\.\/|\/)/) == null
+        moduleDirectory = env.bitcodesDirectory
+    }
 
-        if (isAbstract && fileName.indexOf('/') < 0) {
-            //Core bitcodes
-            possibleFileNames.push(fileName.concat('.js'));
+    let resolvedFile = moduleDirectory + '/' + moduleName
 
-            //official bitcodes
-            fileName = 'thrust-bitcodes/' + fileName;
-        }
+    if (new File(resolvedFile).isDirectory()) {
+        resolvedFile += '/index.js'
+    } else if (!fileName.endsWith('.js') && !fileName.endsWith('.json')) {
+        resolvedFile += '.js'
+    }
 
-        if (env.includeAppDependencies) {
-            possibleFileNames.push(fileName + File.separator + 'index.js');
-            possibleFileNames.push(fileName.concat('.js'));
+    if (!new File(resolvedFile).exists()) {
+        resolvedFile = _thrustDir.getPath() + '/core/' + moduleName + '.js'
+
+        if (!new File(resolvedFile).exists()) {
+            throw new Error("Cannot load '" + fileName + "'")
         }
     }
 
-    return possibleFileNames;
-}
-
-function resolvePossibleFilePaths(env, fileName, requireCurrentDirectory) {
-    var relativeRequire = fileName.startsWith('./') || fileName.startsWith('../');
-    var relativeToRootRequire = fileName.startsWith('/');
-    var possiblePaths = [];
-
-    if (relativeToRootRequire) {
-        possiblePaths.push(env.appRootDirectory);
-    } else if (relativeRequire) {
-        possiblePaths.push(requireCurrentDirectory || env.appRootDirectory);
-    } else {
-        if (env.includeAppDependencies) {
-            // application bitcodes
-            possiblePaths.push(env.appRootDirectory + File.separator + '.lib' + File.separator + 'bitcodes');
-        }
-
-        // core bitcodes
-        possiblePaths.push(_thrustDir.getPath() + File.separator + 'core');
-    }
-
-    return possiblePaths;
+    return resolvedFile
 }
 
 function require(filename) {
-    var env = this
+    const env = this
 
-    var requireCurrentDirectory = _requireCurrentDirectory.get()
+    const requireCurrentDirectory = _requireCurrentDirectory.get()
 
-    var resolvedFile = resolveWichScriptFileToRequire(env, filename, requireCurrentDirectory)
+    const resolvedFile = resolveWichScriptFileToRequire(env, filename, requireCurrentDirectory)
 
     if (env.cacheScript[resolvedFile] !== undefined) {
         return env.cacheScript[resolvedFile]
     }
 
-    var moduleContent = getFileContent(resolvedFile)
+    const moduleContent = getFileContent(resolvedFile)
 
     if (resolvedFile.slice(-5) === '.json') {
         return JSON.parse(moduleContent)
     }
 
-    var result
+    let result
 
     try {
-        _requireCurrentDirectory.set(new File(resolvedFile).getAbsoluteFile().getParent().replace(/\.$/, ''));
+        _requireCurrentDirectory.set(new File(resolvedFile).getAbsoluteFile().getParent().replace(/\.$/, ''))
 
-        var requireContext = new SimpleScriptContext();
-        requireContext.setBindings(env.globalContext.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE);
+        const requireContext = new SimpleScriptContext()
+        requireContext.setBindings(env.globalContext.getBindings(ScriptContext.ENGINE_SCOPE), ScriptContext.ENGINE_SCOPE)
 
-        //TODO: Remover no release oficial
-        var scriptPrefix = '(function() {var exports = {};var module={exports: exports};\t'
-        var scriptSuffix = '\nif (exports !== module.exports) {for (var att in module.exports) {exports[att] = module.exports[att];}}\nreturn exports;\t})()\t//# sourceURL=' + resolvedFile
-
-        // var scriptPrefix = '(function() {var exports = {};\t'
-        // var scriptSuffix = '\nreturn exports;\t})()\t//# sourceURL=' + resolvedFile
+        const scriptPrefix = '(function() {let exports = {};let module={exports: exports};\t'
+        const scriptSuffix = '\nif (exports !== module.exports) {for (let att in module.exports) {exports[att] = module.exports[att];}}\nreturn exports;\t})()\t//# sourceURL=' + resolvedFile
 
         result = env.engine.eval(scriptPrefix + moduleContent + scriptSuffix, requireContext)
     } finally {
-        _requireCurrentDirectory.set(requireCurrentDirectory);
+        _requireCurrentDirectory.set(requireCurrentDirectory)
     }
 
-    // TODO: Verificar
     if (result) {
         if (typeof result === 'object') {
             result = Object.assign({}, result)
@@ -325,13 +279,13 @@ function require(filename) {
                 value: injectMonitoring
             })
         } else if (typeof result === 'function') {
-            result.monitoring = injectMonitoring;
+            result.monitoring = injectMonitoring
         }
     }
 
-    env.cacheScript[resolvedFile] = (env.config && env.config.cacheScript) ? result : undefined;
+    env.cacheScript[resolvedFile] = (env.config && env.config.cacheScript) ? result : undefined
 
-    return result;
+    return result
 }
 
 
@@ -351,17 +305,17 @@ function require(filename) {
 *
 * @returns {function} Usado para pegar configurações
 *
-* @code var dbConfig = getBitcodeConfig('database')
+* @code let dbConfig = getBitcodeConfig('database')
 * @code dbConfig('path.de.uma.config')
 * @code dbConfig('path.de.uma.config', 'MeuApp')
 */
 function getBitcodeConfig(env, bitcode) {
-    var config = getConfig(env)[bitcode] || {}
+    const config = getConfig(env)[bitcode] || {}
 
     return function (property, appId) {
-        var propertyPath = property ? property.split('.') : []
+        const propertyPath = property ? property.split('.') : []
 
-        var result = propertyPath.reduce(function (map, currProp) {
+        let result = propertyPath.reduce(function (map, currProp) {
             if (map && map[currProp]) {
                 return map[currProp]
             } else {
@@ -374,93 +328,97 @@ function getBitcodeConfig(env, bitcode) {
             result = result[appId]
         }
 
-        return result;
+        return result
     }
 }
 
 function buildThrustEnv(args) {
-    var env = {};
+    const env = {}
 
     java.lang.System.getenv().forEach(function (key, value) {
-        env[key] = value;
-    });
+        env[key] = value
+    })
 
-    var optionName;
+    let optionName
     args.forEach(function (arg) {
         if (arg.indexOf('-') === 0) {
             if (optionName) {
                 env[optionName] = true
             }
 
-            optionName = arg.substring(1);
+            optionName = arg.substring(1)
         } else if (optionName) {
-            env[optionName] = arg;
-            optionName = undefined;
+            env[optionName] = arg
+            optionName = undefined
         }
-    });
+    })
 
     if (optionName) {
-        env[optionName] = true;
+        env[optionName] = true
     }
 
-    return env;
+    return env
 }
 
 function thrust(args) {
-    System.setProperty('thrust.dir', _thrustDir.getPath());
-    System.setProperty("nashorn.args", "--language=es6");
-    System.setProperty("java.security.egd", "file:/dev/urandom");
+    System.setProperty('thrust.dir', _thrustDir.getPath())
+    System.setProperty("nashorn.args", "--language=es6")
+    System.setProperty("java.security.egd", "file:/dev/urandom")
 
     load(_pollyFillsPath)
 
-    var env = {}
-    var currDir = ''
+    const env = {}
+    let currDir = ''
 
-    env.includeAppDependencies = true;
+    env.includeAppDependencies = true
     env.engine = new ScriptEngineManager().getEngineByName("nashorn")
     env.cacheScript = {}
 
-    var startupFileName = '';
+    let startupFileName = ''
 
     if (args.length > 0) {
         startupFileName = args[0].replace(/\.js$/, '').concat('.js')
     }
 
-    env.thrustEnv = buildThrustEnv(args.slice(1));
+    env.thrustEnv = buildThrustEnv(args.slice(1))
 
-    var startupFile = new File(startupFileName)
-    var hasStartupFile = startupFile.exists() && startupFile.isFile();
+    const startupFile = new File(startupFileName)
+    const hasStartupFile = startupFile.exists() && startupFile.isFile()
 
-    currDir = hasStartupFile ? startupFile.getAbsoluteFile().getParent() : new File('').getAbsolutePath();
+    currDir = hasStartupFile ? startupFile.getAbsoluteFile().getParent() : new File('').getAbsolutePath()
 
     env.appRootDirectory =
         currDir = currDir
             .replace(/\\\.\\/g, '\\')
             .replace(/\/\/.\//g, '/')
-            .replace(/\.$|\\$|\/$/g, '');
+            .replace(/\.$|\\$|\/$/g, '')
 
-    System.setProperty('user.dir', currDir);
+    System.setProperty('user.dir', currDir)
 
-    env.libRootDirectory = env.appRootDirectory + '/.lib';
-    env.bitcodesDirectory = env.appRootDirectory + '/.lib/bitcodes';
+    env.libRootDirectory = env.appRootDirectory + '/.lib'
+    env.bitcodesDirectory = env.appRootDirectory + '/.lib/bitcodes'
 
-    var configPath = hasStartupFile ? currDir : _thrustDir.getPath();
-    env.config = JSON.parse(getFileContent(configPath + '/config.json'));
+    try {
+        let configPath = hasStartupFile ? currDir : _thrustDir.getPath()
+        env.config = JSON.parse(getFileContent(configPath + '/config.json'))
+    } catch(e) {
+        env.config = {};
+    }
 
-    createGlobalContext(env);
+    createGlobalContext(env)
 
     if (hasStartupFile) {
-        _requireCurrentDirectory.set(currDir);
+        _requireCurrentDirectory.set(currDir)
 
         loadRuntimeJars(env)
-        loadGlobalBitCodes(env);
+        loadGlobalBitCodes(env)
 
         require.call(env, './' + startupFile.getName())
     } else {
-        _requireCurrentDirectory.set(_thrustDir.getPath());
+        _requireCurrentDirectory.set(_thrustDir.getPath())
 
-        env.includeAppDependencies = false;
-        require.call(env, './cli/cli.js').runCLI(args);
+        env.includeAppDependencies = false
+        require.call(env, './cli/cli.js').runCLI(args)
     }
 }
 
