@@ -96,7 +96,7 @@ function getEnv(name, defaultValue) {
     const env = this
 
     if (arguments.length == 0) {
-        return Object.assign({}, env.thrustEnv)
+        return Object.freeze(Object.assign({}, env.thrustEnv))
     }
 
     let value = env.thrustEnv[name]
