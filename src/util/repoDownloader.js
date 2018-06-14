@@ -9,7 +9,7 @@ function downloadZip(repo, version, zipFile) {
   try {
     fs.copyURLToFile(url, zipFile);
   } catch (e) {
-    console.log('Failed to install bitcode, are the name and version corrects? ' + name);
+    console.log('Failed to download file, are the name and version corrects? ' + name);
     throw e;
   }
 }

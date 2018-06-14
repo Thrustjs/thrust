@@ -162,16 +162,27 @@ Para realizar o debug do thrust siga os seguintes passos:
 
 ## What's new
 
+* **v0.5.1**
+ - Criado novo comando "upgrade".
+Ex:
+```
+thrust upgrade //Baixará o thrust que está na master.
+thrust upgrade 0.5.1 //Baixará a tag 0.5.1 to thrust
+```
+**Obs:** O comando precisa de privilégios para atualizar a pasta de instalação, portanto, rode como administrador ou com `sudo`.
+
 * **v0.5.0**
  - Alteramos o core do thrust para que o mesmo seja executado diretamente pelo jjs, agora contamos um código 100% Javascript.
- - Diversas melhorias no sistema de CLI, incluindo help geral e de todos os comandos, além do novo comando "upgrade".
+ - Diversas melhorias no sistema de CLI, incluindo help geral e de todos os comandos.
  - Inclusão do modo debug, vide README para mais detalhes.
  - Incorporado bitcode 'fs' dentro do core, agora não é necessário instalar a dependência 'filesystem'.
  - Novo método env, para carga de configurações do environment, argumentos da linha de comando e config.json
  - Diversas melhorias no sistema de require
  - Função de monitoria nos retornos do require
+  **Quebras de API**
  - Função `loadToGlobal` teve seu nome alterado para `dangerouslyLoadToGlobal`
  - Função require agora lança exceção caso o arquivo solicitado não seja encontrado.
+ - Função readJson foi movida para o bitcode 'fs', que está embarcado no thrust.
 
 * **v0.4.0**
 - Feature: Versionamento de bitcodes

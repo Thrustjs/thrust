@@ -10,7 +10,6 @@ function runUpgrade(runInfo) {
   var currentBriefJson = getCurrentVersionBrief();
 
   var version = runInfo.args.version || 'master';
-  var thrustVersionRepo = THRUST_REPO + '#' + version;
 
   console.log('Your current installed version is:', currentBriefJson.version);
   console.log('Attempting to upgrade to version:', version);
@@ -23,7 +22,7 @@ function runUpgrade(runInfo) {
     zipFile = File.createTempFile('thrust', '.zip', tempDir);
 
     try {
-      repoDownloder.downloadZip(thrustVersionRepo, zipFile);
+      repoDownloder.downloadZip(THRUST_REPO, version, zipFile);
     } catch (e) {
       console.log('Version ' + (runInfo.args.version || 'master') + ' does not exist.');
       console.log('Check our releases on our official repository. [https://github.com/Thrustjs/thrust/releases/]');
@@ -52,10 +51,9 @@ function runUpgrade(runInfo) {
       return;
     }
 
-    var thrustDir = java.lang.System.getProperty('thrust.dir');
-
-    var distDir = new File(thrustDir, '../thrust-download');
+    var thrustDir = new File(java.lang.System.getProperty('thrust.dir'));
     var backupDir = new File(thrustDir, '../thrust-bkp');
+    var distDir = new File(thrustDir, '../lib');
 
     fs.copyDirectory(thrustDir, backupDir);
     fs.copyDirectory(downloadedThrustSrc, distDir);
@@ -74,7 +72,7 @@ function getCurrentVersionBrief() {
     throw new Error("This isn't a thrust app, 'brief.json' not found.")
   }
 
-  return readJson(briefJsonFile.getPath());
+  return fs.readJson(briefJsonFile.getPath());
 }
 
 function versionToNumber(version) {
