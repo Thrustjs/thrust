@@ -162,16 +162,19 @@ Para realizar o debug do thrust siga os seguintes passos:
 
 ## What's new
 
-* **v0.5.1**
- - Criado novo comando "upgrade".
-Ex:
-```
-thrust upgrade //Baixará o thrust que está na master.
-thrust upgrade 0.5.1 //Baixará a tag 0.5.1 to thrust
-```
-**Obs:** O comando precisa de privilégios para atualizar a pasta de instalação, portanto, rode como administrador ou com `sudo`.
+**v0.5.1**
+  - Criado novo comando "upgrade" no CLI, que realiza a atualização do thrust para uma versão específica.
 
-* **v0.5.0**
+  Ex:
+  ```
+  thrust upgrade //Baixará o thrust que está na master.
+  thrust upgrade 0.5.1 //Baixará a tag 0.5.1 to thrust
+  ```
+**Obs:** 
+ - O comando precisa de privilégios para atualizar a pasta de instalação, portanto, rode como administrador ou com `sudo`.
+ - Só é possível alterar para versões 0.5.1 e acima.
+
+ **v0.5.0**
  - Alteramos o core do thrust para que o mesmo seja executado diretamente pelo jjs, agora contamos um código 100% Javascript.
  - Diversas melhorias no sistema de CLI, incluindo help geral e de todos os comandos.
  - Inclusão do modo debug, vide README para mais detalhes.
@@ -184,21 +187,22 @@ thrust upgrade 0.5.1 //Baixará a tag 0.5.1 to thrust
  - Função require agora lança exceção caso o arquivo solicitado não seja encontrado.
  - Função readJson foi movida para o bitcode 'fs', que está embarcado no thrust.
 
-* **v0.4.0**
-- Feature: Versionamento de bitcodes
+**v0.4.0**
+  - Feature: Versionamento de bitcodes
 Agora é possível versionar os seus bitcodes instalados, você pode instalar novamente informando a versão ou modificar diretamente em seu brief.json e rodando o install novamente.
 
-Ex:
-```
-thrust install http@0.1.8 //Baixará a tag 0.1.8 do repositório do http
-thrust install http //Baixará a master do repositório do http, visando retrocompatibilidade
-```
-O brief.json sempre é atualizado com a versão que está sendo instalada, caso já houvesse um "http" ele seria trocado por "http@0.1.8", caso esteja sendo instalado sem versão, a versão será removida do brief.
+  Ex:
+  ```
+  thrust install http@0.1.8 //Baixará a tag 0.1.8 do repositório do http
+  thrust install http //Baixará a master do repositório do http, visando retrocompatibilidade
+  ```
+  O brief.json sempre é atualizado com a versão que está sendo instalada, caso já houvesse um "http" ele seria trocado por "http@0.1.8", caso esteja sendo instalado sem versão, a versão será removida do brief.
 
-* **v.0.3.0**
-Nesta versão alteramos a maneira em que o thrust realiza os downloads de seed e bitcodes GitHub, antes baixavamos arquivo por arquivo com o intuito de ser mais simples e rápido, porém isso fazia com que o github limitasse a quantidade de downloads por hora. Agora baixamos o zip completo e extraimos o que precisamos para execução, não tendo mais problemas com limites.
+**v.0.3.0**
+  Nesta versão alteramos a maneira em que o thrust realiza os downloads de seed e bitcodes GitHub, antes baixavamos arquivo por arquivo com o intuito de ser mais simples e rápido, porém isso fazia com que o github limitasse a quantidade de downloads por hora. Agora baixamos o zip completo e extraimos o que precisamos para execução, não tendo mais problemas com limites.
 
-* **v.0.2.0** - Release inicial do *thrust*
+**v.0.2.0** 
+  - Release inicial do *thrust*
 
 ---
 
