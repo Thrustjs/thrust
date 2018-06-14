@@ -182,10 +182,12 @@ Para realizar o debug do thrust siga os seguintes passos:
  - Novo método env, para carga de configurações do environment, argumentos da linha de comando e config.json
  - Diversas melhorias no sistema de require
  - Função de monitoria nos retornos do require
-  **Quebras de API**
- - Função `loadToGlobal` teve seu nome alterado para `dangerouslyLoadToGlobal`
+
+**Quebras de API**
+ - Função `loadToGlobal` teve seu nome alterado para `dangerouslyLoadToGlobal`.
  - Função require agora lança exceção caso o arquivo solicitado não seja encontrado.
  - Função readJson foi movida para o bitcode 'fs', que está embarcado no thrust.
+ - `getConfig()` antes retornava um objeto que podia ser modificado, agora, modificar este objeto lancará um erro.
 
 **v0.4.0**
   - Feature: Versionamento de bitcodes
