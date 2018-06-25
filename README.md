@@ -162,6 +162,9 @@ Para realizar o debug do thrust siga os seguintes passos:
 
 ## What's new
 
+**v0.5.2**
+  - Ajuste no CLI de init que impedia a inicialização de uma nova aplicação thrust
+
 **v0.5.1**
   - Criado novo comando "upgrade" no CLI, que realiza a atualização do thrust para uma versão específica.
 

@@ -38,11 +38,11 @@ function runInit (runInfo) {
       template = Constants.DEF_SEED_OWNER + '/' + template;
     }
 
-    print('Creating a new Thrust app on ' + installDir + ", based on seed '" + template + "'. Pease wait...")
+    print('Creating a new Thrust app on ' + installDir + ", based on seed '" + template + "'. Please wait...")
 
     var zipFile = new File(installDir, 'thrustinit.zip')
 
-    repoDownloder.downloadZip(template, zipFile)
+    repoDownloder.downloadZip(template, '', zipFile)
 
     var createdFiles = fs.unzip(zipFile.getPath(), installDir)
 
