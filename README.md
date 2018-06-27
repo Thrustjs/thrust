@@ -162,6 +162,9 @@ Para realizar o debug do thrust siga os seguintes passos:
 
 ## What's new
 
+**v0.5.3**
+  - Adição do método addInterceptor ao require, para que seja possível interceptar o load do código
+
 **v0.5.2**
   - Ajuste no CLI de init que impedia a inicialização de uma nova aplicação thrust
 
