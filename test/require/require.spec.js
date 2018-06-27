@@ -52,7 +52,7 @@ exports = function exec(describe, it, beforeEach, afterEach, expect, should, ass
       var value = require('./require/utilAppendExport.js');
       expect(value).to.be.an('object');
       expect(Object.keys(value)).to.contains.members(['func', 'outroDado']);
-      //expect(value).to.have.own.property('func'); Porque não funciona usando own.property?
+      expect(value.func()).to.equals(true)
     });
 
     it('Deve conseguir cachear um require', function () {
