@@ -17,13 +17,18 @@ const _thrustDir = new File(__DIR__)
 const _self = this
 const _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js'
 let _thrustEnv
+let _requireLoaderInterceptorFn = [];
 
 // Essa variável é usada para controlar o path atual do require, para que seja possível
 // fazer require de "./" dentro de um bitcode por exemplo.
 const _requireCurrentDirectory = new ThreadLocal()
 
 function getFileContent(fullPath) {
-    return new JString(Files.readAllBytes(Paths.get(fullPath)))
+    let content = new JString(Files.readAllBytes(Paths.get(fullPath)));
+
+    return _requireLoaderInterceptorFn.reduce(function(c, interceptor) {
+        return interceptor(fullPath, c);
+    }, content);
 }
 function loadRuntimeJars(env) {
     const jarLibDir = Paths.get(env.libRootDirectory, "jars").toFile()
@@ -179,11 +184,14 @@ function createGlobalContext(env) {
     const globalContext = new SimpleScriptContext()
     const polyfills = getFileContent(_pollyFillsPath)
 
+    let bindedRequire = require.bind(env);
+    bindedRequire.addInterceptor = addRequireLoaderInterceptor;
+
     globalContext.setAttribute('env', getEnv.bind(env), ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('loadJar', loadJar.bind(env), ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('getConfig', getConfig.bind(null, env), ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('getBitcodeConfig', getBitcodeConfig.bind(null, env), ScriptContext.ENGINE_SCOPE)
-    globalContext.setAttribute('require', require.bind(env), ScriptContext.ENGINE_SCOPE)
+    globalContext.setAttribute('require', bindedRequire, ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('rootPath', env.appRootDirectory, ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('exports', {}, ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('dangerouslyLoadToGlobal', dangerouslyLoadToGlobal.bind(null, env), ScriptContext.ENGINE_SCOPE)
@@ -288,6 +296,9 @@ function require(filename) {
     return result
 }
 
+function addRequireLoaderInterceptor(fn) {
+    _requireLoaderInterceptorFn.push(fn);
+}
 
 /**
 * Usado para pegar um getter de configuração
@@ -401,7 +412,7 @@ function thrust(args) {
     try {
         let configPath = hasStartupFile ? currDir : _thrustDir.getPath()
         env.config = Object.freeze(JSON.parse(getFileContent(configPath + '/config.json')));
-    } catch(e) {
+    } catch (e) {
         env.config = Object.freeze({});
     }
 
