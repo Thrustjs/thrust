@@ -1,11 +1,13 @@
 var File = Java.type('java.io.File')
 var Files = Java.type('java.nio.file.Files')
-var JString = java.lang.String
+var JString = Java.type('java.lang.String')
 var Paths = Java.type('java.nio.file.Paths')
 var StandardCharsets = Java.type('java.nio.charset.StandardCharsets')
+var System = Java.type('java.lang.System')
+var Base64 = Java.type('java.util.Base64')
 
 function log (str) {
-    java.lang.System.out.print(str);
+    System.out.print(str);
   }
 
 function show() {
@@ -31,13 +33,13 @@ function identity(i) {
 }
 
 function btoa(decodedString) {
-    var encoder = java.util.Base64.getEncoder()
+    var encoder = Base64.getEncoder()
 
     return new String(new JString(encoder.encode(new JString(decodedString).getBytes(StandardCharsets.UTF_8))))
 }
 
 function atob(encodedString) {
-    var decoder = java.util.Base64.getDecoder()
+    var decoder = Base64.getDecoder()
 
     return new String(new JString(decoder.decode(new JString(encodedString).getBytes(StandardCharsets.UTF_8))))
 }

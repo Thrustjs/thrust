@@ -1,4 +1,5 @@
-var File = Java.type('java.io.File');
+var File = Java.type('java.io.File')
+var System = Java.type('java.lang.System')
 
 var COMMANDS = loadCliCommands();
 
@@ -97,7 +98,7 @@ function processCommand (args) {
 
 function loadCliCommands () {
   var commands = [];
-  var thrustDir = java.lang.System.getProperty('thrust.dir');
+  var thrustDir = System.getProperty('thrust.dir');
 
   Java.from(new File(thrustDir, 'cli/commands').listFiles()).forEach(function (file) {
     if (file.isFile() && file.getName().endsWith('.js')) {

@@ -1,3 +1,5 @@
+"use strict";
+
 var ThreadLocal = Java.type("java.lang.ThreadLocal")
 var ClassLoader = Java.type("java.lang.ClassLoader")
 var File = Java.type('java.io.File')
@@ -13,9 +15,9 @@ var System = Java.type('java.lang.System')
 var URL = Java.type("java.net.URL")
 var URLClassLoader = Java.type("java.net.URLClassLoader")
 
-const _thrustDir = new File(__DIR__)
 const _self = this
-const _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js'
+let _pollyFillsPath
+let _thrustDir
 let _thrustEnv
 let _requireLoaderInterceptorFn = [];
 
@@ -66,7 +68,7 @@ function loadGlobalBitCodes(env) {
 
         bitList.forEach(function (bitCodeName) {
             const firstIndexToSearch = bitCodeName.lastIndexOf('/') > -1 ? bitCodeName.lastIndexOf('/') + 1 : 0
-            const bitCodeExportName = bitCodeName.substring(firstIndexToSearch, bitCodeName.length())
+            const bitCodeExportName = bitCodeName.substring(firstIndexToSearch, bitCodeName.length)
 
             dangerouslyLoadToGlobal(env, bitCodeExportName, require.call(env, bitCodeName))
         })
@@ -346,7 +348,7 @@ function getBitcodeConfig(env, bitcode) {
 function buildThrustEnv(args) {
     const env = {}
 
-    java.lang.System.getenv().forEach(function (key, value) {
+    System.getenv().forEach(function (key, value) {
         env[key] = value
     })
 
@@ -372,26 +374,38 @@ function buildThrustEnv(args) {
 }
 
 function thrust(args) {
-    System.setProperty('thrust.dir', _thrustDir.getPath())
     System.setProperty("nashorn.args", "--language=es6")
     System.setProperty("java.security.egd", "file:/dev/urandom")
 
-    load(_pollyFillsPath)
-
     const env = {}
+    env.thrustEnv = buildThrustEnv(args)
+
+    let isGrallVM = Boolean(env.thrustEnv.THRUSTDIR);
+
+    if (isGrallVM) {
+        _thrustDir = new File(env.thrustEnv.THRUSTDIR)
+    } else {
+        _thrustDir = new File(__DIR__)
+    }
+
+    System.setProperty('thrust.dir', _thrustDir.getPath())
+
+   _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js'
+    load(_pollyFillsPath)
+    
     let currDir = ''
 
     env.includeAppDependencies = true
-    env.engine = new ScriptEngineManager().getEngineByName("nashorn")
+    env.engine = new ScriptEngineManager().getEngineByName(isGrallVM ? "graal.js" :"nashorn")
     env.cacheScript = {}
 
     let startupFileName = ''
 
-    if (args.length > 0) {
-        startupFileName = args[0].replace(/\.js$/, '').concat('.js')
-    }
+    let startupFileArgPos = isGrallVM ? 2 : 0
 
-    env.thrustEnv = buildThrustEnv(args.slice(1))
+    if (args.length > startupFileArgPos) {
+        startupFileName = args[startupFileArgPos].replace(/\.js$/, '').concat('.js')
+    }
 
     const startupFile = new File(startupFileName)
     const hasStartupFile = startupFile.exists() && startupFile.isFile()

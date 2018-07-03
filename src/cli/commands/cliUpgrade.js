@@ -1,5 +1,6 @@
 var File = Java.type('java.io.File')
 var Files = Java.type('java.nio.file.Files')
+var System = Java.type('java.lang.System')
 
 var fs = require('fs')
 var repoDownloder = require('../../util/repoDownloader.js')
@@ -51,7 +52,7 @@ function runUpgrade(runInfo) {
       return;
     }
 
-    var thrustDir = new File(java.lang.System.getProperty('thrust.dir'));
+    var thrustDir = new File(System.getProperty('thrust.dir'));
     var backupDir = new File(thrustDir, '../thrust-bkp');
     var distDir = new File(thrustDir, '../lib');
 
@@ -66,7 +67,7 @@ function runUpgrade(runInfo) {
 }
 
 function getCurrentVersionBrief() {
-  var briefJsonFile = new File(new File(java.lang.System.getProperty('thrust.dir')).getPath(), 'brief.json')
+  var briefJsonFile = new File(new File(System.getProperty('thrust.dir')).getPath(), 'brief.json')
 
   if (!briefJsonFile.exists()) {
     throw new Error("This isn't a thrust app, 'brief.json' not found.")
