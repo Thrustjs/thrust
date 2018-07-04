@@ -3,7 +3,7 @@ var Files = Java.type('java.nio.file.Files');
 var InputStream = Java.type('java.io.InputStream');
 var BufferedReader = Java.type('java.io.BufferedReader');
 var ZipInputStream = Java.type("java.util.zip.ZipInputStream");
-var BufferedOutputStream = Java.type( "java.io.BufferedOutputStream");
+var BufferedOutputStream = Java.type("java.io.BufferedOutputStream");
 var FileOutputStream = Java.type('java.io.FileOutputStream');
 var FileInputStream = Java.type('java.io.FileInputStream');
 var Charsets = Java.type('java.nio.charset.Charset');
@@ -124,14 +124,24 @@ function write(file, str, encoding) {
     try {
       out = openOutputStream(file, false);
 
-      var bytes = new JString(str).getBytes();
+      var bytes = strToBytes(str);
 
-      out.write(new JString(bytes, Charsets.forName(encoding || 'UTF-8')).getBytes());
+      out.write(strToBytes(new JString(bytes, Charsets.forName(encoding || 'UTF-8'))));
       out.flush();
     } finally {
       close(out);
     }
   }
+}
+
+function strToBytes(str) {
+  var data = [];
+  
+  for (var i = 0; i < str.length; i++) {
+    data.push(str.charCodeAt(i));
+  }
+
+  return data;
 }
 
 function openOutputStream(file, append) {
@@ -393,13 +403,13 @@ function unzip(zipFilePath, destDirectory) {
 
   try {
     zipIn = new ZipInputStream(new FileInputStream(zipFilePath))
-    
+
     var createdFiles = [];
     var entry = zipIn.getNextEntry()
-    
+
     while (entry != null) {
       createdFiles.push(entry.getName())
-  
+
       var filePath = destDirectory + File.separator + entry.getName()
       if (!entry.isDirectory()) {
         extractFile(zipIn, filePath)

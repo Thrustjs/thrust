@@ -6,6 +6,10 @@ var StandardCharsets = Java.type('java.nio.charset.StandardCharsets')
 var System = Java.type('java.lang.System')
 var Base64 = Java.type('java.util.Base64')
 
+function exit(code) {
+    System.exit(code)
+}
+
 function log (str) {
     System.out.print(str);
   }
