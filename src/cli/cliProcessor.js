@@ -1,5 +1,7 @@
 var File = Java.type('java.io.File');
 
+let fs = require('fs')
+
 var COMMANDS = loadCliCommands();
 
 var HELP_CMD = COMMANDS.find(function (cmd) {
@@ -10,7 +12,7 @@ var VERSION_CMD = COMMANDS.find(function (cmd) {
   return cmd.name.indexOf('version') > -1;
 });
 
-function processCommand (args) {
+function processCommand(args) {
   var argsMD = {
     args: [],
     options: {
@@ -50,7 +52,7 @@ function processCommand (args) {
     possibleCmd = HELP_CMD;
 
     if (argsMD.options['h']) {
-      argsMD.args = [ firstArgument ].concat(argsMD.args);
+      argsMD.args = [firstArgument].concat(argsMD.args);
     }
   } else if (!firstArgument && argsMD.options['v']) { // Verificamos se é um comando apenas de versão
     possibleCmd = VERSION_CMD;
@@ -95,18 +97,36 @@ function processCommand (args) {
   };
 }
 
-function loadCliCommands () {
+function loadCliCommands() {
   var commands = [];
   var thrustDir = java.lang.System.getProperty('thrust.dir');
 
   Java.from(new File(thrustDir, 'cli/commands').listFiles()).forEach(function (file) {
     if (file.isFile() && file.getName().endsWith('.js')) {
       var requireFile = './commands/' + file.getName();
-
-      var commandInfo = require(requireFile);
-      commands.push(commandInfo);
+      commands.push(require(requireFile));
     }
   });
+
+  const cliExtensions = fs.readJson('./brief.json')['cli-extensions']
+
+  if (cliExtensions) {
+    let list
+
+    if (typeof cliExtensions === 'string') {
+      bitList = [cliExtensions.trim()]
+    } else if (Array.isArray(cliExtensions)) {
+      list = cliExtensions.map(function (name) {
+        return name.trim()
+      })
+    } else {
+      throw new Error('cli-extensions property must be a string or an array.')
+    }
+
+    list.forEach(function (cliExtension) {
+      commands.push(require(cliExtension));
+    })
+  }
 
   return commands;
 }

@@ -2,8 +2,10 @@ var File = Java.type('java.io.File');
 var Files = Java.type('java.nio.file.Files');
 var InputStream = Java.type('java.io.InputStream');
 var BufferedReader = Java.type('java.io.BufferedReader');
+var ZipEntry = Java.type('java.util.zip.ZipEntry');
 var ZipInputStream = Java.type("java.util.zip.ZipInputStream");
-var BufferedOutputStream = Java.type( "java.io.BufferedOutputStream");
+var ZipOutputStream = Java.type("java.util.zip.ZipOutputStream");
+var BufferedOutputStream = Java.type("java.io.BufferedOutputStream");
 var FileOutputStream = Java.type('java.io.FileOutputStream');
 var FileInputStream = Java.type('java.io.FileInputStream');
 var Charsets = Java.type('java.nio.charset.Charset');
@@ -391,13 +393,13 @@ function unzip(zipFilePath, destDirectory) {
 
   try {
     zipIn = new ZipInputStream(new FileInputStream(zipFilePath))
-    
+
     var createdFiles = [];
     var entry = zipIn.getNextEntry()
-    
+
     while (entry != null) {
       createdFiles.push(entry.getName())
-  
+
       var filePath = destDirectory + File.separator + entry.getName()
       if (!entry.isDirectory()) {
         extractFile(zipIn, filePath)
@@ -433,6 +435,62 @@ function extractFile(zipIn, filePath) {
   }
 }
 
+function zip(source, zipFile) {
+  let buffer = new Byte(1024);
+  let zos;
+
+  try {
+    if (typeof zipFile == 'string') {
+      zipFile = new File(zipFile);
+    }
+
+    if (typeof source == 'string') {
+      source = new File(source);
+    }
+
+    let fos = new FileOutputStream(zipFile);
+    zos = new ZipOutputStream(fos);
+
+    let fileList = collectFilesToZip(source.getAbsolutePath(), new File(source), []);
+
+    fileList.forEach(function (file) {
+      let ze = new ZipEntry(file);
+      zos.putNextEntry(ze);
+
+      let fileStream;
+
+      try {
+        fileStream = new FileInputStream(source + File.separator + file);
+
+        let len;
+        while ((len = fileStream.read(buffer)) > 0) {
+          zos.write(buffer, 0, len);
+        }
+      } finally {
+        close(fileStream);
+      }
+    })
+  } finally {
+    if (zos) {
+      zos.closeEntry();
+      zos.close();
+    }
+  }
+}
+
+function collectFilesToZip(sourcePath, node, result) {
+  if (node.isDirectory()) {
+    Java.from(node.list()).forEach(function (fileName) {
+      collectFilesToZip(sourcePath, new File(node, fileName), result);
+    })
+  } else {
+    let file = node.getAbsoluteFile().toString();
+    result.push(file.substring(sourcePath.length() + 1, file.length()));
+  }
+
+  return result;
+}
+
 function close(closeable) {
   if (closeable) {
     closeable.close();
@@ -451,5 +509,6 @@ exports = {
   exists: exists,
   lines: lines,
   readJson: readJson,
-  unzip: unzip
+  unzip: unzip,
+  zip: zip
 };
