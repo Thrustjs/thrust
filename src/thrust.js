@@ -104,7 +104,7 @@ function getEnv(name, defaultValue) {
         return Object.freeze(Object.assign({}, env.thrustEnv))
     }
 
-    let value = env.thrustEnv[name]
+    let value = env.thrustEnv[name] || env.thrustEnv[name.replace(/\./g, '_').toUpperCase()];
 
     if (isEmpty(value)) {
         value = recursiveGet(getConfig(env), name)
