@@ -63,7 +63,7 @@ function runInstall(runInfo) {
   }
 
   if (jarsToInstall) {
-    installJarDependencies(installDir, jarsToInstall)
+    installJarDependencies(installDir, jarsToInstall, briefJson.dependencies)
   }
 
   if (resource) {
@@ -269,7 +269,7 @@ function copyBitcodeFromCache(cachedBitcode, libBitcodeDir) {
   fs.copyDirectory(cachedBitcode.file, libBitcodeDir);
 }
 
-function installJarDependencies(installDir, jarDeps) {
+function installJarDependencies(installDir, jarDeps, briefDependencies) {
   jarDeps.forEach(function (jarDep) {
     var depParts = jarDep.split(':')
 
@@ -277,10 +277,29 @@ function installJarDependencies(installDir, jarDeps) {
       throw new Error("Failed to install a jar dependency. A dependency must be on this form: 'group:name:version'. [" + jarDep + ']');
     }
 
+    var mavenRepoUrl = Constants.MAVEN_BASE_URL;
     var group = depParts[0]
     var artifact = depParts[1]
     var version = depParts[2]
     var jarName = artifact.concat('-').concat(version).concat('.jar')
+
+    if (group.indexOf('@') > -1) {
+      var src = group.split('@');
+      group = src[1];
+
+      var mavenRepo = src[0];
+
+      if (mavenRepo != 'central') {
+        var briefMavenRepos = briefDependencies && briefDependencies['maven-repos'];
+
+        if (!briefMavenRepos || !briefMavenRepos[mavenRepo]) {
+          throw new Error('O repositório do maven \'' + mavenRepo + '\' com sua URL deve ser informado no brief.json em dependencies.maven-repos.' + mavenRepo)
+        }
+
+        mavenRepoUrl = briefMavenRepos[mavenRepo];
+      }
+
+    }
 
     var libJarFile = Paths.get(installDir, Constants.LIB_PATH_JAR, jarName).toFile()
 
@@ -296,8 +315,22 @@ function installJarDependencies(installDir, jarDeps) {
     if (!jarCache.exists()) { // not found on cache
       log('Not found on cache, downloading...')
 
-      var url = new URL(formatString(Constants.MAVEN_BASE_URL, group.replace(/\./g, '/'), artifact, version, jarName))
-      fs.copyURLToFile(url, jarCache);
+      var url = new URL(formatString(mavenRepoUrl, {
+        group: group.replace(/\./g, '/'),
+        artifact: artifact,
+        version: version,
+        jarName: jarName
+      }))
+
+      try {
+        fs.copyURLToFile(url, jarCache)
+      } catch (e) {
+        e.printStackTrace()
+
+        fs.deleteQuietly(jarCache)
+        
+        throw e
+      }
     } else {
       log('Version ' + version + ' found on cache...')
     }
@@ -308,11 +341,10 @@ function installJarDependencies(installDir, jarDeps) {
   })
 }
 
-function formatString(format) {
-  var args = Array.prototype.slice.call(arguments, 1);
+function formatString(format, obj) {
 
-  return format.replace(/{(\d+)}/g, function (match, number) {
-    return typeof args[number] !== 'undefined' ? args[number] : match
+  return format.replace(/{(\w+)}/g, function (match, number) {
+    return typeof obj[number] !== 'undefined' ? obj[number] : match
   })
 }
 
