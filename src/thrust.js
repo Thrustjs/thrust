@@ -28,7 +28,7 @@ const _requireCurrentDirectory = new ThreadLocal()
 function getFileContent(fullPath) {
     let content = new JString(Files.readAllBytes(Paths.get(fullPath)));
 
-    return _requireLoaderInterceptorFn.reduce(function(c, interceptor) {
+    return _requireLoaderInterceptorFn.reduce(function (c, interceptor) {
         return interceptor(fullPath, c);
     }, content);
 }
@@ -373,6 +373,15 @@ function buildThrustEnv(args) {
     return env
 }
 
+function buildConfigObj(isGrallVM, hasStartupFile, currDir) {
+    try {
+        let configPath = hasStartupFile ? currDir : _thrustDir.getPath()
+        return Object.freeze(JSON.parse(getFileContent(configPath + '/config.json')));
+    } catch (e) {
+        return Object.freeze({})
+    }
+}
+
 function thrust(args) {
     System.setProperty("nashorn.args", "--language=es6")
     System.setProperty("java.security.egd", "file:/dev/urandom")
@@ -380,28 +389,29 @@ function thrust(args) {
     const env = {}
     env.thrustEnv = buildThrustEnv(args)
 
-    let isGrallVM = Boolean(env.thrustEnv.THRUSTDIR);
+    let isGrallVM = env.thrustEnv.GRAAL == 'true';
 
-    if (isGrallVM) {
+    if (env.thrustEnv.THRUSTDIR) {
         _thrustDir = new File(env.thrustEnv.THRUSTDIR)
     } else {
         _thrustDir = new File(__DIR__)
     }
 
+    System.setProperty("thrust.graal", isGrallVM)
     System.setProperty('thrust.dir', _thrustDir.getPath())
 
-   _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js'
+    _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js'
     load(_pollyFillsPath)
-    
+
     let currDir = ''
 
     env.includeAppDependencies = true
-    env.engine = new ScriptEngineManager().getEngineByName(isGrallVM ? "graal.js" :"nashorn")
+    env.engine = new ScriptEngineManager().getEngineByName(isGrallVM ? "graal.js" : "nashorn")
     env.cacheScript = {}
 
     let startupFileName = ''
 
-    let startupFileArgPos = isGrallVM ? 2 : 0
+    let startupFileArgPos = isGrallVM ? 4 : 0
 
     if (args.length > startupFileArgPos) {
         startupFileName = args[startupFileArgPos].replace(/\.js$/, '').concat('.js')
@@ -422,13 +432,7 @@ function thrust(args) {
 
     env.libRootDirectory = env.appRootDirectory + '/.lib'
     env.bitcodesDirectory = env.appRootDirectory + '/.lib/bitcodes'
-
-    try {
-        let configPath = hasStartupFile ? currDir : _thrustDir.getPath()
-        env.config = Object.freeze(JSON.parse(getFileContent(configPath + '/config.json')));
-    } catch (e) {
-        env.config = Object.freeze({});
-    }
+    env.config = buildConfigObj(isGrallVM, hasStartupFile, currDir, isGrallVM)
 
     createGlobalContext(env)
 

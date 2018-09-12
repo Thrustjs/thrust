@@ -5,14 +5,17 @@ var Paths = Java.type('java.nio.file.Paths')
 var StandardCharsets = Java.type('java.nio.charset.StandardCharsets')
 var System = Java.type('java.lang.System')
 var Base64 = Java.type('java.util.Base64')
+var System = Java.type('java.lang.System')
+
+var isGraalVM = System.getProperty("thrust.graal") == 'true';
 
 function exit(code) {
     System.exit(code)
 }
 
-function log (str) {
+function log(str) {
     System.out.print(str);
-  }
+}
 
 function show() {
     var args = Array.prototype.slice.call(arguments).map(function (arg) {
@@ -154,6 +157,21 @@ if (!String.prototype.padStart) {
     };
 }
 
+if (isGraalVM) {
+    Object.defineProperty(Object, "freeze", {
+        enumerable: false,
+        configurable: true,
+        writable: true,
+        value: function (target) {
+            "use strict";
+            return new Proxy(target, {
+                set: function (target, propKey, receiver) {
+                    throw Error('You can\'t set properties on this object')
+                }
+            })
+        }
+    });
+}
 
 /**
  * nashorn-promise
