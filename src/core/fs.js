@@ -391,7 +391,13 @@ function unzip(zipFilePath, destDirectory) {
   var destDir = undefined
 
   if (destDirectory) {
-    var destDir = new File(destDirectory)
+    if (typeof directory === 'string') {
+      destDir = new File(destDirectory);
+    } else {
+      destDir = destDirectory;
+      destDirectory = destDirectory.getAbsolutePath()
+    }
+
     if (!destDir.exists()) {
       destDir.mkdir()
     }
