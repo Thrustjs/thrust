@@ -439,7 +439,6 @@ function extractFile(zipIn, filePath) {
   try {
     bos = new BufferedOutputStream(new FileOutputStream(filePath))
 
-    bos = new BufferedOutputStream(new FileOutputStream(filePath))
     var bytesIn = new Byte(4096)
     var read = 0
 

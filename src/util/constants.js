@@ -20,5 +20,5 @@ exports = {
 
     DEF_SEED_OWNER: "thrust-seeds",
     DEF_BITCODES_OWNER: "thrust-bitcodes",
-    MAVEN_BASE_URL: "http://central.maven.org/maven2/{0}/{1}/{2}/{3}" //group/name/version/jarName
+    MAVEN_BASE_URL: "http://central.maven.org/maven2/{group}/{artifact}/{version}/{jarName}" //group/name/version/jarName,
 }
