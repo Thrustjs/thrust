@@ -3,8 +3,9 @@ jdk:
   - oraclejdk8
 
 env:
-  - GRAAL_VERSION=1.0.0-rc6
-  - GRAAL_HOME=~/graalvm
+  global:
+    - GRAAL_VERSION=1.0.0-rc6
+    - GRAAL_HOME=~/graalvm
 
 before_install:
   - sudo apt-get update
