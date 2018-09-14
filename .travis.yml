@@ -5,14 +5,13 @@ jdk:
 env:
   global:
     - GRAAL_VERSION=1.0.0-rc6
-    - GRAAL_HOME=~/graalvm
+    - GRAAL_HOME=/home/travis/graalvm
 
 before_install:
   - sudo apt-get update
   - sudo apt-get install -y curl
   - sudo mkdir $GRAAL_HOME
-  - cd $GRAAL_HOME
-  - sudo curl -fsSL "https://github.com/oracle/graal/releases/download/vm-${GRAAL_VERSION}/graalvm-ce-${GRAAL_VERSION}-linux-amd64.tar.gz" | tar -xvz --strip-components 1
+  - sudo curl -fsSL "https://github.com/oracle/graal/releases/download/vm-${GRAAL_VERSION}/graalvm-ce-${GRAAL_VERSION}-linux-amd64.tar.gz" | tar -zxC $GRAAL_HOME
 
 script: ./gradlew build
 
