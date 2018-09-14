@@ -10,8 +10,8 @@ env:
 before_install:
   - sudo apt-get update
   - sudo apt-get install -y curl
-  - sudo mkdir $GRAAL_HOME
-  - sudo curl -fsSL "https://github.com/oracle/graal/releases/download/vm-${GRAAL_VERSION}/graalvm-ce-${GRAAL_VERSION}-linux-amd64.tar.gz" | tar -zxC $GRAAL_HOME
+  - mkdir $GRAAL_HOME
+  - curl -fsSL "https://github.com/oracle/graal/releases/download/vm-${GRAAL_VERSION}/graalvm-ce-${GRAAL_VERSION}-linux-amd64.tar.gz" | tar -zxC $GRAAL_HOME --strip-components=1
 
 script: ./gradlew build
 
