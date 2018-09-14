@@ -1,6 +1,15 @@
 language: java
 jdk:
   - oraclejdk8
+
+env:
+- GRAAL_VERSION=1.0.0-rc6
+
+install:
+  - mkdir /graalvm && \
+    curl -fsSL "https://github.com/oracle/graal/releases/download/vm-${GRAAL_VERSION}/graalvm-ce-${GRAAL_VERSION}-linux-amd64.tar.gz" | tar -zxC /graalvm --strip-components 1 && \
+  - export GRAAL_HOME=/graalvm
+
 script: ./gradlew build
 
 deploy:
