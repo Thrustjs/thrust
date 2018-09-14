@@ -52,8 +52,14 @@ task test(type: Exec) {
     commandLine '../scripts/thrust-local.sh', 'test.js'
 }
 
+task testGraal(type: Exec) {
+    workingDir './test'
+    commandLine '../scripts/thrust-local.sh', 'test.js', '--graal'
+}
+
 test.dependsOn clean
 test.dependsOn preTest
 build.dependsOn test
+build.dependsOn testGraal
 build.finalizedBy buildRpm
 build.finalizedBy buildDeb

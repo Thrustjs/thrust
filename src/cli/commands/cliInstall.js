@@ -187,7 +187,7 @@ function installBitcodes(installDir, bitcodesToInstall) {
           throw new Error("Invalid thrust-seed, 'brief.json' was not found on " + briefJsonFile.getAbsolutePath())
         }
 
-        libBriefJson = fs.readJson(briefJsonFile);
+        libBriefJson = fs.readJson(briefJsonFile.getAbsolutePath());
 
         cachedBitcode = findBitcodeInLocalCache(bitcodeInfo.owner, bitcodeInfo.repository, libBriefJson.version)
 
