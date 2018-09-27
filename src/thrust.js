@@ -135,10 +135,10 @@ function classLoadJar(jarPath) {
         const jarFile = new File(jarPath)
 
         if (jarFile.exists()) {
-            const method = URLClassLoader.class.getDeclaredMethod('addURL', [URL.class])
+            const method = URLClassLoader.class.getDeclaredMethod('addURL', URL.class)
 
             method.setAccessible(true)
-            method.invoke(ClassLoader.getSystemClassLoader(), [jarFile.toURI().toURL()])
+            method.invoke(ClassLoader.getSystemClassLoader(), jarFile.toURI().toURL())
         } else {
             throw new Error('File not found')
         }
@@ -373,7 +373,7 @@ function buildThrustEnv(args) {
     return env
 }
 
-function buildConfigObj(isGrallVM, hasStartupFile, currDir) {
+function buildConfigObj(isGraalVM, hasStartupFile, currDir) {
     try {
         let configPath = hasStartupFile ? currDir : _thrustDir.getPath()
         return Object.freeze(JSON.parse(getFileContent(configPath + '/config.json')));
@@ -389,7 +389,7 @@ function thrust(args) {
     const env = {}
     env.thrustEnv = buildThrustEnv(args)
 
-    let isGrallVM = env.thrustEnv.GRAAL == 'true';
+    let isGraalVM = env.thrustEnv.GRAAL == 'true';
 
     if (env.thrustEnv.THRUSTDIR) {
         _thrustDir = new File(env.thrustEnv.THRUSTDIR)
@@ -397,7 +397,7 @@ function thrust(args) {
         _thrustDir = new File(__DIR__)
     }
 
-    System.setProperty("thrust.graal", isGrallVM)
+    System.setProperty("thrust.graal", isGraalVM)
     System.setProperty('thrust.dir', _thrustDir.getPath())
 
     _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js'
@@ -406,12 +406,12 @@ function thrust(args) {
     let currDir = ''
 
     env.includeAppDependencies = true
-    env.engine = new ScriptEngineManager().getEngineByName(isGrallVM ? "graal.js" : "nashorn")
+    env.engine = new ScriptEngineManager().getEngineByName(isGraalVM ? "graal.js" : "nashorn")
     env.cacheScript = {}
 
     let startupFileName = ''
 
-    let startupFileArgPos = isGrallVM ? 4 : 0
+    let startupFileArgPos = isGraalVM ? 4 : 0
 
     if (args.length > startupFileArgPos) {
         startupFileName = args[startupFileArgPos].replace(/\.js$/, '').concat('.js')
@@ -432,7 +432,7 @@ function thrust(args) {
 
     env.libRootDirectory = env.appRootDirectory + '/.lib'
     env.bitcodesDirectory = env.appRootDirectory + '/.lib/bitcodes'
-    env.config = buildConfigObj(isGrallVM, hasStartupFile, currDir, isGrallVM)
+    env.config = buildConfigObj(isGraalVM, hasStartupFile, currDir, isGraalVM)
 
     createGlobalContext(env)
 

@@ -17,6 +17,12 @@ function log(str) {
     System.out.print(str);
 }
 
+if (isGraalVM) {
+    function print() {
+        System.out.println(Array.prototype.slice.call(arguments).join(' '));
+    }
+}
+
 function show() {
     var args = Array.prototype.slice.call(arguments).map(function (arg) {
         return (arg && arg.constructor && (arg.constructor.name == "Array" || arg.constructor.name === "Object"))

@@ -30,7 +30,7 @@ if [ "${GRAAL}" = true ] || [ "${USE_THRUST_GRAAL}" = true ]; then
         DEBUG='--inspect'
     fi
 
-    eval $GRAAL_HOME/bin/js --jvm --js.nashorn-compat --strict $DEBUG $THRUSTDIR/thrust.js -- -GRAAL true -THRUSTDIR $THRUSTDIR $*
+    eval $GRAAL_HOME/bin/js --jvm --js.nashorn-compat=true --strict $DEBUG $THRUSTDIR/thrust.js -- -GRAAL true -THRUSTDIR $THRUSTDIR $*
 else 
     if [ "${DEBUG}" = true ]; then 
         if ! [ -x "$(command -v ncdbg)" ]; then
