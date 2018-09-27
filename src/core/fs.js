@@ -13,6 +13,8 @@ var StandardCharsets = Java.type('java.nio.charset.StandardCharsets');
 var JString = Java.type('java.lang.String');
 var Paths = Java.type('java.nio.file.Paths');
 var Byte = Java.type("byte[]")
+var StandardCopyOption = Java.type('java.nio.file.StandardCopyOption')
+var LinkOption = Java.type('java.nio.file.LinkOption')
 
 var ONE_KB = 1024;
 var ONE_MB = ONE_KB * ONE_KB;
@@ -124,14 +126,24 @@ function write(file, str, encoding) {
     try {
       out = openOutputStream(file, false);
 
-      var bytes = new JString(str).getBytes();
+      var bytes = strToBytes(str);
 
-      out.write(new JString(bytes, Charsets.forName(encoding || 'UTF-8')).getBytes());
+      out.write(strToBytes(new JString(bytes, Charsets.forName(encoding || 'UTF-8'))));
       out.flush();
     } finally {
       close(out);
     }
   }
+}
+
+function strToBytes(str) {
+  var data = [];
+  
+  for (var i = 0; i < str.length; i++) {
+    data.push(str.charCodeAt(i));
+  }
+
+  return data;
 }
 
 function openOutputStream(file, append) {
@@ -254,7 +266,7 @@ function copyURLToFile(url, destination) {
 
   try {
     is = url.openStream()
-    Files.copy(is, destination.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+    Files.copy(is, destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
   } finally {
     close(is);
   }
@@ -319,7 +331,7 @@ function readAll(filePathName, charSet) {
   var cs = charSet || StandardCharsets.UTF_8
 
   try {
-    content = new java.lang.String(Files.readAllBytes(Paths.get(filePathName)), cs)
+    content = new JString(Files.readAllBytes(Paths.get(filePathName)), cs)
   } catch (e) {
     // print('Error: ' + e.message);
     throw new Error('Unable to read file at: ' + filePathName + ', ' + e)
@@ -344,7 +356,7 @@ function readJson(filePathName, charSet) {
    * @returns {boolean} - *true* if the file exists; *false* if the file does not exist or its existence cannot be determined.
    */
 function exists(filePathName) {
-  return Files.exists(Paths.get(filePathName), java.nio.file.LinkOption.NOFOLLOW_LINKS)
+  return Files.exists(Paths.get(filePathName), LinkOption.NOFOLLOW_LINKS)
 }
 
 /**
@@ -381,7 +393,13 @@ function unzip(zipFilePath, destDirectory) {
   var destDir = undefined
 
   if (destDirectory) {
-    var destDir = new File(destDirectory)
+    if (typeof directory === 'string') {
+      destDir = new File(destDirectory);
+    } else {
+      destDir = destDirectory;
+      destDirectory = destDirectory.getAbsolutePath()
+    }
+
     if (!destDir.exists()) {
       destDir.mkdir()
     }

@@ -1,3 +1,5 @@
+"use strict";
+
 var ThreadLocal = Java.type("java.lang.ThreadLocal")
 var ClassLoader = Java.type("java.lang.ClassLoader")
 var File = Java.type('java.io.File')
@@ -13,9 +15,9 @@ var System = Java.type('java.lang.System')
 var URL = Java.type("java.net.URL")
 var URLClassLoader = Java.type("java.net.URLClassLoader")
 
-const _thrustDir = new File(__DIR__)
 const _self = this
-const _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js'
+let _pollyFillsPath
+let _thrustDir
 let _thrustEnv
 let _requireLoaderInterceptorFn = [];
 
@@ -26,7 +28,7 @@ const _requireCurrentDirectory = new ThreadLocal()
 function getFileContent(fullPath) {
     let content = new JString(Files.readAllBytes(Paths.get(fullPath)));
 
-    return _requireLoaderInterceptorFn.reduce(function(c, interceptor) {
+    return _requireLoaderInterceptorFn.reduce(function (c, interceptor) {
         return interceptor(fullPath, c);
     }, content);
 }
@@ -66,7 +68,7 @@ function loadGlobalBitCodes(env) {
 
         bitList.forEach(function (bitCodeName) {
             const firstIndexToSearch = bitCodeName.lastIndexOf('/') > -1 ? bitCodeName.lastIndexOf('/') + 1 : 0
-            const bitCodeExportName = bitCodeName.substring(firstIndexToSearch, bitCodeName.length())
+            const bitCodeExportName = bitCodeName.substring(firstIndexToSearch, bitCodeName.length)
 
             dangerouslyLoadToGlobal(env, bitCodeExportName, require.call(env, bitCodeName))
         })
@@ -133,10 +135,10 @@ function classLoadJar(jarPath) {
         const jarFile = new File(jarPath)
 
         if (jarFile.exists()) {
-            const method = URLClassLoader.class.getDeclaredMethod('addURL', [URL.class])
+            const method = URLClassLoader.class.getDeclaredMethod('addURL', URL.class)
 
             method.setAccessible(true)
-            method.invoke(ClassLoader.getSystemClassLoader(), [jarFile.toURI().toURL()])
+            method.invoke(ClassLoader.getSystemClassLoader(), jarFile.toURI().toURL())
         } else {
             throw new Error('File not found')
         }
@@ -356,7 +358,7 @@ function getBitcodeConfig(env, bitcode) {
 function buildThrustEnv(args) {
     const env = {}
 
-    java.lang.System.getenv().forEach(function (key, value) {
+    System.getenv().forEach(function (key, value) {
         env[key] = value
     })
 
@@ -381,27 +383,49 @@ function buildThrustEnv(args) {
     return env
 }
 
+function buildConfigObj(isGraalVM, hasStartupFile, currDir) {
+    try {
+        let configPath = hasStartupFile ? currDir : _thrustDir.getPath()
+        return Object.freeze(JSON.parse(getFileContent(configPath + '/config.json')));
+    } catch (e) {
+        return Object.freeze({})
+    }
+}
+
 function thrust(args) {
-    System.setProperty('thrust.dir', _thrustDir.getPath())
     System.setProperty("nashorn.args", "--language=es6")
     System.setProperty("java.security.egd", "file:/dev/urandom")
 
+    const env = {}
+    env.thrustEnv = buildThrustEnv(args)
+
+    let isGraalVM = env.thrustEnv.GRAAL == 'true';
+
+    if (env.thrustEnv.THRUSTDIR) {
+        _thrustDir = new File(env.thrustEnv.THRUSTDIR)
+    } else {
+        _thrustDir = new File(__DIR__)
+    }
+
+    System.setProperty("thrust.graal", isGraalVM)
+    System.setProperty('thrust.dir', _thrustDir.getPath())
+
+    _pollyFillsPath = _thrustDir.getPath() + '/thpolyfills.js'
     load(_pollyFillsPath)
 
-    const env = {}
     let currDir = ''
 
     env.includeAppDependencies = true
-    env.engine = new ScriptEngineManager().getEngineByName("nashorn")
+    env.engine = new ScriptEngineManager().getEngineByName(isGraalVM ? "graal.js" : "nashorn")
     env.cacheScript = {}
 
     let startupFileName = ''
 
-    if (args.length > 0) {
-        startupFileName = args[0].replace(/\.js$/, '').concat('.js')
-    }
+    let startupFileArgPos = isGraalVM ? 4 : 0
 
-    env.thrustEnv = buildThrustEnv(args.slice(1))
+    if (args.length > startupFileArgPos) {
+        startupFileName = args[startupFileArgPos].replace(/\.js$/, '').concat('.js')
+    }
 
     const startupFile = new File(startupFileName)
     const hasStartupFile = startupFile.exists() && startupFile.isFile()
@@ -418,13 +442,7 @@ function thrust(args) {
 
     env.libRootDirectory = env.appRootDirectory + '/.lib'
     env.bitcodesDirectory = env.appRootDirectory + '/.lib/bitcodes'
-
-    try {
-        let configPath = hasStartupFile ? currDir : _thrustDir.getPath()
-        env.config = Object.freeze(JSON.parse(getFileContent(configPath + '/config.json')));
-    } catch (e) {
-        env.config = Object.freeze({});
-    }
+    env.config = buildConfigObj(isGraalVM, hasStartupFile, currDir, isGraalVM)
 
     createGlobalContext(env)
 

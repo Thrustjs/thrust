@@ -1,3 +1,5 @@
+var System = Java.type('java.lang.System')
+
 var ConsoleColors = require('console-colors');
 
 function cliHelp (runInfo, allCommands) {
@@ -82,10 +84,10 @@ function printCliHelpTable (tableRows) {
 
   tableRows.forEach(function (row) {
     row.forEach(function (value, index) {
-      java.lang.System.out.print(value);
+      System.out.print(value);
 
       if (index === 0) {
-        java.lang.System.out.print(new Array(firstColMaxLength - value.length).join(' '));
+        System.out.print(new Array(firstColMaxLength - value.length).join(' '));
       }
     });
 

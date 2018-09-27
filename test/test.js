@@ -6,6 +6,10 @@ var testFiles = collectTestFiles(Paths.get(rootPath).toFile());
 function collectTestFiles (baseDir) {
   var testFiles = [];
 
+  if (baseDir.getName() == 'graaljs' && !env('GRAAL')) {
+    return testFiles;
+  }
+
   Java.from(baseDir.listFiles()).forEach(function (file) {
     if (file.isFile()) {
       if (file.getName().endsWith('.spec.js')) {

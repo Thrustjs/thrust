@@ -144,6 +144,8 @@ As propriedades abaixo devem ser configuradas no arquivo *config.json* (distribu
 
 # Debug no VSCode
 
+**Atualmente, o debug de aplicações não funciona com a `GraalVM`**.
+
 Para realizar o debug do thrust siga os seguintes passos:
 
 1 -Baixe o seguinte projeto, extraria e o coloque sua pasta `bin` no path de seu SO: [NCDbg](https://github.com/provegard/ncdbg/releases/tag/0.8.0)
@@ -157,6 +159,32 @@ Para realizar o debug do thrust siga os seguintes passos:
 5 - Inicie sua aplicação com `thrust arquivo.js --debug`
 
 6 - A execução ficará aguardando conexão do debug para prosseguir, então na aba `Debug` do VSCode, inicie a execução de `Attach to NCDbg`
+
+# GraalVM
+
+A partir da versão **0.6.0** o thrust dá suporte a utilização da [GraalVM](https://www.graalvm.org/).
+
+Utilizando a `GraalVM`, o interpretador deixa de ser o `Nashorn` e passa a ser o `GraalJS`, que é compatível com `ES8`.
+
+Existem algumas quebras de API entre um interpretador e outro,
+o migration guide, disponibilizado pelo próprio `GraalJS` está disponível em [NashornMigrationGuide.md](https://github.com/graalvm/graaljs/blob/master/docs/user/NashornMigrationGuide.md)
+
+Para utilização da `GrallVM` você pode chamar o thrust passando o parâmetro `--graal` ou ter uma variável de ambiente chamada `USE_THRUST_GRAAL` setada como `true`.
+Exemplos:
+
+```bash
+export USE_THRUST_GRAAL=true #você pode setar esta linha em seu ~/.bashrc
+thrust teste.js
+```
+
+```bash
+thrust teste.js --graal
+```
+
+Observações:
+
+* Atualmente, o debug de aplicações não funciona com a `GraalVM`.
+* No futuro, o GraalJS será o interpretador padrão do thrust.
 
 ---
 

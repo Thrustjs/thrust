@@ -1,12 +1,27 @@
 var File = Java.type('java.io.File')
 var Files = Java.type('java.nio.file.Files')
-var JString = java.lang.String
+var JString = Java.type('java.lang.String')
 var Paths = Java.type('java.nio.file.Paths')
 var StandardCharsets = Java.type('java.nio.charset.StandardCharsets')
+var System = Java.type('java.lang.System')
+var Base64 = Java.type('java.util.Base64')
+var System = Java.type('java.lang.System')
 
-function log (str) {
-    java.lang.System.out.print(str);
-  }
+var isGraalVM = System.getProperty("thrust.graal") == 'true';
+
+function exit(code) {
+    System.exit(code)
+}
+
+function log(str) {
+    System.out.print(str);
+}
+
+if (isGraalVM) {
+    function print() {
+        System.out.println(Array.prototype.slice.call(arguments).join(' '));
+    }
+}
 
 function show() {
     var args = Array.prototype.slice.call(arguments).map(function (arg) {
@@ -31,13 +46,13 @@ function identity(i) {
 }
 
 function btoa(decodedString) {
-    var encoder = java.util.Base64.getEncoder()
+    var encoder = Base64.getEncoder()
 
     return new String(new JString(encoder.encode(new JString(decodedString).getBytes(StandardCharsets.UTF_8))))
 }
 
 function atob(encodedString) {
-    var decoder = java.util.Base64.getDecoder()
+    var decoder = Base64.getDecoder()
 
     return new String(new JString(decoder.decode(new JString(encodedString).getBytes(StandardCharsets.UTF_8))))
 }
@@ -148,8 +163,24 @@ if (!String.prototype.padStart) {
     };
 }
 
+if (isGraalVM) {
+    Object.defineProperty(Object, "freeze", {
+        enumerable: false,
+        configurable: true,
+        writable: true,
+        value: function (target) {
+            "use strict";
+            return new Proxy(target, {
+                set: function (target, propKey, receiver) {
+                    throw Error('You can\'t set properties on this object')
+                }
+            })
+        }
+    });
+}
 
-/**
+if (!isGraalVM) {
+    /**
  * nashorn-promise
  *
  * @author hidekatsu.izuno@gmail.com (Hidekatsu Izuno)
@@ -158,154 +189,154 @@ if (!String.prototype.padStart) {
 
 
 
-var JCompletableFuture = Java.type('java.util.concurrent.CompletableFuture');
-var JCompleteFutureArray = Java.type('java.util.concurrent.CompletableFuture[]');
-// var JPromiseException = Java.type('net.arnx.nashorn.lib.PromiseException');
-var JPromiseException = function (result) {
-    this.result = result
-    this.getResult = function () { return this.result }
-}
+    var JCompletableFuture = Java.type('java.util.concurrent.CompletableFuture');
+    var JCompleteFutureArray = Java.type('java.util.concurrent.CompletableFuture[]');
+    // var JPromiseException = Java.type('net.arnx.nashorn.lib.PromiseException');
+    var JPromiseException = function (result) {
+        this.result = result
+        this.getResult = function () { return this.result }
+    }
 
-var _global_ = this
-var Promise = function (resolver, futures) {
-    var that = this;
-    if (resolver instanceof JCompletableFuture) {
-        that._future = resolver;
-        that._futures = futures;
-    } else {
-        var func = Java.synchronized(function () {
-            var status, result;
-            (0, resolver)(function (value) {
-                status = 'fulfilled';
-                result = value;
-            }, function (reason) {
-                status = 'rejected';
-                result = reason;
-            });
-            if (status == 'fulfilled') {
-                return {
-                    result: result
-                };
-            } else if (status == 'rejected') {
-                throw new JPromiseException(result);
-            }
-        }, _global_);
-        if (Promise._pool) {
-            that._future = JCompletableFuture.supplyAsync(func, Promise._pool);
+    var _global_ = this
+    var Promise = function (resolver, futures) {
+        var that = this;
+        if (resolver instanceof JCompletableFuture) {
+            that._future = resolver;
+            that._futures = futures;
         } else {
-            that._future = JCompletableFuture.supplyAsync(func);
-        }
-    }
-};
-
-Promise.all = function (array) {
-    var futures = array.map(function (elem) {
-        if (elem instanceof Promise) {
-            return elem._future;
-        }
-        return Promise.resolve(elem)._future;
-    });
-    return new Promise(JCompletableFuture.allOf(Java.to(futures, JCompleteFutureArray)), futures);
-};
-
-Promise.race = function (array) {
-    var futures = array.map(function (elem) {
-        if (elem instanceof Promise) {
-            return elem._future;
-        }
-        return Promise.resolve(elem)._future;
-    });
-    return new Promise(JCompletableFuture.anyOf(Java.to(futures, JCompleteFutureArray)));
-};
-
-Promise.resolve = function (value) {
-    if (value instanceof Promise) {
-        return value;
-    } else if (value != null
-        && (typeof value === 'function' || typeof value === 'object')
-        && typeof value.then === 'function') {
-        return new Promise(function (fulfill, reject) {
-            try {
-                return {
-                    result: value.then(fulfill, reject)
+            var func = Java.synchronized(function () {
+                var status, result;
+                (0, resolver)(function (value) {
+                    status = 'fulfilled';
+                    result = value;
+                }, function (reason) {
+                    status = 'rejected';
+                    result = reason;
+                });
+                if (status == 'fulfilled') {
+                    return {
+                        result: result
+                    };
+                } else if (status == 'rejected') {
+                    throw new JPromiseException(result);
                 }
-            } catch (e) {
-                throw new JPromiseException(e);
+            }, _global_);
+            if (Promise._pool) {
+                that._future = JCompletableFuture.supplyAsync(func, Promise._pool);
+            } else {
+                that._future = JCompletableFuture.supplyAsync(func);
             }
+        }
+    };
+
+    Promise.all = function (array) {
+        var futures = array.map(function (elem) {
+            if (elem instanceof Promise) {
+                return elem._future;
+            }
+            return Promise.resolve(elem)._future;
         });
-    } else {
-        return new Promise(JCompletableFuture.completedFuture({
-            result: value
-        }));
-    }
-};
+        return new Promise(JCompletableFuture.allOf(Java.to(futures, JCompleteFutureArray)), futures);
+    };
 
-Promise.reject = function (value) {
-    return new Promise(function (fulfill, reject) {
-        reject(value);
-    });
-};
+    Promise.race = function (array) {
+        var futures = array.map(function (elem) {
+            if (elem instanceof Promise) {
+                return elem._future;
+            }
+            return Promise.resolve(elem)._future;
+        });
+        return new Promise(JCompletableFuture.anyOf(Java.to(futures, JCompleteFutureArray)));
+    };
 
-Promise.prototype.then = function (onFulfillment, onRejection) {
-    var that = this;
-    return new Promise(that._future.handle(function (success, error) {
-        if (success == null && error == null && that._futures != null) {
-            success = {
-                result: that._futures.map(function (elem) {
-                    return elem.get().result;
-                })
-            };
-        }
-
-        if (success != null) {
-            if (typeof onFulfillment === 'function') {
+    Promise.resolve = function (value) {
+        if (value instanceof Promise) {
+            return value;
+        } else if (value != null
+            && (typeof value === 'function' || typeof value === 'object')
+            && typeof value.then === 'function') {
+            return new Promise(function (fulfill, reject) {
                 try {
-                    var value = success.result;
-                    if (value instanceof Promise) {
+                    return {
+                        result: value.then(fulfill, reject)
+                    }
+                } catch (e) {
+                    throw new JPromiseException(e);
+                }
+            });
+        } else {
+            return new Promise(JCompletableFuture.completedFuture({
+                result: value
+            }));
+        }
+    };
+
+    Promise.reject = function (value) {
+        return new Promise(function (fulfill, reject) {
+            reject(value);
+        });
+    };
+
+    Promise.prototype.then = function (onFulfillment, onRejection) {
+        var that = this;
+        return new Promise(that._future.handle(function (success, error) {
+            if (success == null && error == null && that._futures != null) {
+                success = {
+                    result: that._futures.map(function (elem) {
+                        return elem.get().result;
+                    })
+                };
+            }
+
+            if (success != null) {
+                if (typeof onFulfillment === 'function') {
+                    try {
+                        var value = success.result;
+                        if (value instanceof Promise) {
+                            return {
+                                result: (0, onFulfillment)(value._future.get().result)
+                            };
+                        }
                         return {
-                            result: (0, onFulfillment)(value._future.get().result)
+                            result: (0, onFulfillment)(success.result)
                         };
+                    } catch (e) {
+                        throw new JPromiseException(e)
                     }
-                    return {
-                        result: (0, onFulfillment)(success.result)
-                    };
-                } catch (e) {
-                    throw new JPromiseException(e)
                 }
-            }
-            return success;
-        } else if (error != null) {
-            var cerror = error;
-            do {
-                if (cerror instanceof JPromiseException) {
-                    error = cerror;
-                    break;
-                }
-            } while ((cerror = cerror.getCause()) != null);
-
-            if (typeof onRejection === 'function') {
-                try {
-                    var reason = error;
-                    if (error instanceof JPromiseException) {
-                        reason = error.getResult();
+                return success;
+            } else if (error != null) {
+                var cerror = error;
+                do {
+                    if (cerror instanceof JPromiseException) {
+                        error = cerror;
+                        break;
                     }
+                } while ((cerror = cerror.getCause()) != null);
 
-                    return {
-                        result: (0, onRejection)(reason)
-                    };
-                } catch (e) {
-                    throw new JPromiseException(e)
+                if (typeof onRejection === 'function') {
+                    try {
+                        var reason = error;
+                        if (error instanceof JPromiseException) {
+                            reason = error.getResult();
+                        }
+
+                        return {
+                            result: (0, onRejection)(reason)
+                        };
+                    } catch (e) {
+                        throw new JPromiseException(e)
+                    }
                 }
+                throw error;
             }
-            throw error;
-        }
-    }));
-};
+        }));
+    };
 
-Promise.prototype.catch = function (onRejection) {
-    return this.then(null, onRejection);
-};
-
+    Promise.prototype.catch = function (onRejection) {
+        return this.then(null, onRejection);
+    };
+}
 
 // https://gist.github.com/josmardias/20493bd205e24e31c0a406472330515a at least
 // one timeout needs to be set, larger then your code bootstrap or Nashorn will
