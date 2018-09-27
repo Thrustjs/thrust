@@ -104,7 +104,7 @@ function getEnv(name, defaultValue) {
         return Object.freeze(Object.assign({}, env.thrustEnv))
     }
 
-    let value = env.thrustEnv[name]
+    let value = env.thrustEnv[name] || env.thrustEnv[name.replace(/\./g, '_').toUpperCase()];
 
     if (isEmpty(value)) {
         value = recursiveGet(getConfig(env), name)
@@ -157,6 +157,14 @@ function dangerouslyLoadToGlobal(env, name, obj) {
     env.globalContext.setAttribute(name, obj, ScriptContext.ENGINE_SCOPE)
 }
 
+function dangerouslyClearRequireCache(env) {
+    this.cacheScript = {};
+}
+
+function addOnRequireCache(env, name, obj) {
+    this.cacheScript[name] = obj;
+}
+
 function getConfig(env) {
     return env.config;
 }
@@ -186,6 +194,8 @@ function createGlobalContext(env) {
 
     let bindedRequire = require.bind(env);
     bindedRequire.addInterceptor = addRequireLoaderInterceptor;
+    bindedRequire.clearCache = dangerouslyClearRequireCache.bind(env);
+    bindedRequire.addOnRequireCache = addOnRequireCache.bind(env);
 
     globalContext.setAttribute('env', getEnv.bind(env), ScriptContext.ENGINE_SCOPE)
     globalContext.setAttribute('loadJar', loadJar.bind(env), ScriptContext.ENGINE_SCOPE)
