@@ -196,7 +196,7 @@ function createGlobalContext(env) {
 
     let bindedRequire = require.bind(env);
     bindedRequire.addInterceptor = addRequireLoaderInterceptor;
-    bindedRequire.clearCache = dangerouslyClearRequireCache.bind(env);
+    bindedRequire.dangerouslyClearRequireCache = dangerouslyClearRequireCache.bind(env);
     bindedRequire.addOnRequireCache = addOnRequireCache.bind(env);
 
     globalContext.setAttribute('env', getEnv.bind(env), ScriptContext.ENGINE_SCOPE)

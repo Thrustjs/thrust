@@ -115,7 +115,7 @@ function loadCliCommands() {
     let list
 
     if (typeof cliExtensions === 'string') {
-      bitList = [cliExtensions.trim()]
+      list = [cliExtensions.trim()]
     } else if (Array.isArray(cliExtensions)) {
       list = cliExtensions.map(function (name) {
         return name.trim()
@@ -125,7 +125,11 @@ function loadCliCommands() {
     }
 
     list.forEach(function (cliExtension) {
-      commands.push(require(cliExtension));
+      try {
+        commands.push(require(cliExtension));
+      } catch (e) {
+        console.log('Falha ao carregar extensão de cli:', cliExtension, e.message)
+      }
     })
   }
 
