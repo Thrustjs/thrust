@@ -18,5 +18,5 @@ COPY ./scripts/thrust.sh /opt/thrust/bin/thrust.sh
 
 RUN ln -s /opt/thrust/bin/thrust.sh /usr/local/bin/thrust
 
-# docker build -t thrust-graal -f docker/graal.Dockerfile .
-# docker run --rm --network="host" -v $(pwd):/app -w /app/test thrust-graal /bin/sh -c "thrust install && thrust test.js"
+# docker build -t thrustjs/thrust:graal-latest -f graal.Dockerfile .
+# docker run --rm --network="host" -v $(pwd):/app -w /app/test thrustjs/thrust:graal-latest /bin/sh -c "thrust install && thrust test.js"
