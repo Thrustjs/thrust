@@ -25,7 +25,7 @@ module.exports = {
     "console": true,
     "load": true,
     "__DIR__": true,
-    "java": true
+    "Polyglot": true
   },
 
   "rules": {
@@ -51,7 +51,7 @@ module.exports = {
     "func-call-spacing": ["error", "never"],
     "generator-star-spacing": ["error", { "before": true, "after": true }],
     "handle-callback-err": ["error", "^(err|error)$"],
-    "indent": ["error", 2, { "SwitchCase": 1 }],
+    "indent": ["error", 4, { "SwitchCase": 1 }],
     "key-spacing": ["error", { "beforeColon": false, "afterColon": true }],
     "keyword-spacing": ["error", { "before": true, "after": true }],
     "new-cap": ["error", { "newIsCap": true, "capIsNew": false }],
@@ -156,7 +156,7 @@ module.exports = {
     "rest-spread-spacing": ["error", "never"],
     "semi-spacing": ["error", { "before": false, "after": true }],
     "space-before-blocks": ["error", "always"],
-    "space-before-function-paren": ["error", "always"],
+    "space-before-function-paren": ["error", { "anonymous": "always", "named": "never", "asyncArrow": "always" }],
     "space-in-parens": ["error", "never"],
     "space-infix-ops": "error",
     "space-unary-ops": ["error", { "words": true, "nonwords": false }],

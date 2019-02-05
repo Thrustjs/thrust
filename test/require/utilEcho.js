@@ -1,4 +1,4 @@
-var echo = function (obj) {
+var echo = function(obj) {
   return obj;
 }
 
