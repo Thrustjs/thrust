@@ -70,8 +70,9 @@ dist/seed
 .classpath
 
 /test/teste_log*
-test/.lib/bitcodes/thrust-bitcodes/majesty
-test/.lib/bitcodes/thrust-bitcodes/majesty-report-console
+
+# test/.lib/bitcodes/thrust-bitcodes/majesty
+# test/.lib/bitcodes/thrust-bitcodes/majesty-report-console
 
 *.bak
 *.7z
