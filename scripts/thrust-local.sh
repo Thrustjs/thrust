@@ -7,8 +7,8 @@ if [ "${GRAAL_HOME}" = "" ]; then
     exit 1
 fi
 
-if [ "${DEBUG}" = true ]; then 
+if [ "${DEBUG}" = true ]; then
     DEBUG='--inspect'
 fi
 
-eval $GRAAL_HOME/bin/js --jvm --polyglot $DEBUG $THRUSTDIR/th.js -- $*
+eval $GRAAL_HOME/bin/js --jvm --polyglot $DEBUG $THRUSTDIR/thrust.js -- $*

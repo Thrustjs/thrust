@@ -4,7 +4,7 @@ jdk:
 
 env:
   global:
-    - GRAAL_VERSION=1.0.0-rc6
+    - GRAAL_VERSION=1.0.0-rc12
     - GRAAL_HOME=/home/travis/graalvm
 
 before_install:
