@@ -11,4 +11,4 @@ if [ "${DEBUG}" = true ]; then
     DEBUG='--inspect'
 fi
 
-eval $GRAAL_HOME/bin/js --jvm --polyglot --js.nashorn-compat $DEBUG $THRUSTDIR/thrust.js -- $*
+eval $GRAAL_HOME/bin/js --jvm --polyglot --nashorn-compat $DEBUG $THRUSTDIR/thrust.js -- $*
