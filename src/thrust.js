@@ -2,7 +2,7 @@
 
 const ThreadLocal = Java.type('java.lang.ThreadLocal')
 
-const require = (function(filename) {
+let require = (function(filename) {
     const File = Java.type('java.io.File')
     const Files = Java.type('java.nio.file.Files')
     const JString = Java.type('java.lang.String')
@@ -203,14 +203,18 @@ const require = (function(filename) {
                 loadRuntimeJars(ctx.rootPath, ctx.libRootDirectory)
                 loadGlobalBitCodes()
             }
+
             System.setProperty('thrust.dir', '/mnt/c/work/thrustjs/thrust/src')
             ctx.initialized = true
         }
 
-        if (ctx.initialized === true) {
-        } else {
+        if (!ctx.initialized) {
             print(`### [ running init ] => ${arguments[0]} ***************`)
             init(args)
+        }
+
+        require.addInterceptor = (fn) => {
+            ctx._requireLoaderInterceptorFn.push(fn);
         }
 
         let env = {
@@ -239,10 +243,11 @@ const require = (function(filename) {
     function getFileContent(fullPath) {
         let content = new JString(Files.readAllBytes(Paths.get(fullPath)));
 
-        // return _requireLoaderInterceptorFn.reduce((c, interceptor) => {
-        //     return interceptor(fullPath, c);
-        // }, content);
-        return content
+        // print('Dbg: [', ctx._requireLoaderInterceptorFn.length, ']', fullPath)
+        return ctx._requireLoaderInterceptorFn.reduce((c, interceptor) => {
+            return interceptor(fullPath, c)
+        }, content)
+        // return content
     }
 
     /**
@@ -372,7 +377,11 @@ const require = (function(filename) {
 
     return result
 })
-    .bind({ cacheScript: {}, _requireCurrentDirectory: new ThreadLocal() })
+    .bind({
+        cacheScript: {},
+        _requireCurrentDirectory: new ThreadLocal(),
+        _requireLoaderInterceptorFn: []
+    })
 
 require((() => {
     const File = Java.type('java.io.File')

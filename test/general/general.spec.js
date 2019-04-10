@@ -1,6 +1,6 @@
 exports = function exec(describe, it, beforeEach, afterEach, expect, should, assert) {
-    describe('Testes gerais', function () {
-        it('getConfig should be frozen', function () {
+    describe('Testes gerais', function() {
+        it('getConfig should be frozen', function() {
             // expect(function() {
             //     let cfg = getConfig();
             //     cfg.a = 1;
@@ -12,28 +12,28 @@ exports = function exec(describe, it, beforeEach, afterEach, expect, should, ass
         });
     });
 
-    describe('Testes ES8 da Graal', function () {
+    describe('Testes ES8 da Graal', function() {
         const obj = {
             a: 1
         };
 
-        it('Teste com destrutor', function () {
+        it('Teste com destrutor', function() {
             const { a } = obj;
             expect(a).to.equals(1);
         });
 
-        it('Teste com arrow function', function () {
+        it('Teste com arrow function', function() {
             const sum = (x, y) => x + y;
             expect(sum(1, 2)).to.equals(3);
         });
 
-        it('Teste com StringInterpolation', function () {
+        it('Teste com StringInterpolation', function() {
             const numberOne = 1
             const stringInterpolation = `NumberOne: ${numberOne}`
             expect(stringInterpolation).to.be.equals('NumberOne: 1')
         });
 
-        it('Teste com outboxing não automático do Java para o JS', function () {
+        it('Teste com outboxing não automático do Java para o JS', function() {
             const JString = Java.type('java.lang.String');
             const javaString = new JString('teste');
             /**
