@@ -1,4 +1,4 @@
-FROM findepi/graalvm:1.0.0-rc12-all
+FROM findepi/graalvm:1.0.0-rc14-all
 
 ENV JAVA_HOME /graalvm
 ENV GRAAL_HOME=/graalvm
