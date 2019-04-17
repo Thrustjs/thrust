@@ -7,7 +7,7 @@ var System = Java.type('java.lang.System')
 var Base64 = Java.type('java.util.Base64')
 var System = Java.type('java.lang.System')
 
-var isGraalVM = System.getProperty("thrust.graal") == 'true';
+var isGraalVM = System.getProperty('thrust.graal') == 'true';
 
 function exit(code) {
     System.exit(code)
@@ -25,7 +25,7 @@ if (isGraalVM) {
 
 function show() {
     var args = Array.prototype.slice.call(arguments).map(function (arg) {
-        return (arg && arg.constructor && (arg.constructor.name == "Array" || arg.constructor.name === "Object"))
+        return (arg && arg.constructor && (arg.constructor.name == 'Array' || arg.constructor.name === 'Object'))
             ? JSON.stringify(arg)
             : arg
     })
@@ -48,23 +48,22 @@ function identity(i) {
 function btoa(decodedString) {
     var encoder = Base64.getEncoder()
 
-    return new String(new JString(encoder.encode(new JString(decodedString).getBytes(StandardCharsets.UTF_8))))
+    return new String(new JString(encoder.encode(StandardCharsets.UTF_8.encode(new JString(decodedString)))))
 }
 
 function atob(encodedString) {
     var decoder = Base64.getDecoder()
 
-    return new String(new JString(decoder.decode(new JString(encodedString).getBytes(StandardCharsets.UTF_8))))
+    return new String(new JString(decoder.decode(StandardCharsets.UTF_8.encode(new JString(encodedString)))))
 }
 
-
 if (!Object.assign) {
-    Object.defineProperty(Object, "assign", {
+    Object.defineProperty(Object, 'assign', {
         enumerable: false,
         configurable: true,
         writable: true,
         value: function (target) {
-            "use strict";
+            'use strict';
             if (target === undefined || target === null) {
                 throw new TypeError('Cannot convert first argument to object');
             }
@@ -91,7 +90,6 @@ if (!Object.assign) {
     });
 }
 
-
 if (!Object.values) {
     Object.values = function values(target) {
         return Object.getOwnPropertyNames(target).map(function (k) {
@@ -99,7 +97,6 @@ if (!Object.values) {
         })
     }
 }
-
 
 if (!Array.prototype.find) {
     Object.defineProperty(Array.prototype, 'find', {
@@ -145,18 +142,16 @@ if (!Array.prototype.find) {
     });
 }
 
-
 if (!String.prototype.padStart) {
     String.prototype.padStart = function padStart(targetLength, padString) {
-        targetLength = targetLength >> 0; //truncate if number or convert non-number to 0;
+        targetLength = targetLength >> 0; // truncate if number or convert non-number to 0;
         padString = String((typeof padString !== 'undefined' ? padString : ' '));
         if (this.length > targetLength) {
             return String(this);
-        }
-        else {
+        } else {
             targetLength = targetLength - this.length;
             if (targetLength > padString.length) {
-                padString += padString.repeat(targetLength / padString.length); //append to original to ensure we are longer than needed
+                padString += padString.repeat(targetLength / padString.length); // append to original to ensure we are longer than needed
             }
             return padString.slice(0, targetLength) + String(this);
         }
@@ -164,12 +159,12 @@ if (!String.prototype.padStart) {
 }
 
 if (isGraalVM) {
-    Object.defineProperty(Object, "freeze", {
+    Object.defineProperty(Object, 'freeze', {
         enumerable: false,
         configurable: true,
         writable: true,
         value: function (target) {
-            "use strict";
+            'use strict';
             return new Proxy(target, {
                 set: function (target, propKey, receiver) {
                     throw Error('You can\'t set properties on this object')
@@ -186,8 +181,6 @@ if (!isGraalVM) {
  * @author hidekatsu.izuno@gmail.com (Hidekatsu Izuno)
  * @license MIT License
  */
-
-
 
     var JCompletableFuture = Java.type('java.util.concurrent.CompletableFuture');
     var JCompleteFutureArray = Java.type('java.util.concurrent.CompletableFuture[]');
@@ -252,9 +245,9 @@ if (!isGraalVM) {
     Promise.resolve = function (value) {
         if (value instanceof Promise) {
             return value;
-        } else if (value != null
-            && (typeof value === 'function' || typeof value === 'object')
-            && typeof value.then === 'function') {
+        } else if (value != null &&
+            (typeof value === 'function' || typeof value === 'object') &&
+            typeof value.then === 'function') {
             return new Promise(function (fulfill, reject) {
                 try {
                     return {
