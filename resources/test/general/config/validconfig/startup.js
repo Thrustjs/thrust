@@ -1,0 +1,1 @@
+print(__CONFIG__.constructor.name === 'Object' && __CONFIG__.name === 'thrust')

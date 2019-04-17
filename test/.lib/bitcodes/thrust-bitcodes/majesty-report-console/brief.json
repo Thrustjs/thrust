@@ -1,7 +1,0 @@
-{
-  "name": "majesty-report-console",
-  "description": "Plugin de report usando o console para o majesty",
-  "path": "index.js",
-  "version": "0.0.1",
-  "author": "Bruno Machado"
-}

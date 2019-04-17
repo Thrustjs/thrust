@@ -1,0 +1,1 @@
+print(JSON.stringify(__CONFIG__))
