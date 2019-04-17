@@ -48,13 +48,13 @@ function identity(i) {
 function btoa(decodedString) {
     var encoder = Base64.getEncoder()
 
-    return new String(new JString(encoder.encode(StandardCharsets.UTF_8.encode(new JString(decodedString)))))
+    return new String(new JString(encoder.encode(StandardCharsets.UTF_8.encode(new JString(decodedString)).array())))
 }
 
 function atob(encodedString) {
     var decoder = Base64.getDecoder()
 
-    return new String(new JString(decoder.decode(StandardCharsets.UTF_8.encode(new JString(encodedString)))))
+    return new String(new JString(decoder.decode(StandardCharsets.UTF_8.encode(new JString(encodedString)).array())))
 }
 
 if (!Object.assign) {

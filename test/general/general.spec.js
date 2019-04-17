@@ -33,16 +33,11 @@ exports = function exec(describe, it, beforeEach, afterEach, expect, should, ass
             expect(stringInterpolation).to.be.equals('NumberOne: 1')
         });
 
-        it('Teste com outboxing não automático do Java para o JS', function () {
-            const JString = Java.type('java.lang.String');
-            const javaString = new JString('teste');
+        it('Teste com encoding bytes utilizando StandardCharsets', function () {
+            const javaString = 'teste';
             const StandardCharsets = Java.type('java.nio.charset.StandardCharsets');
 
-            /**
-            * Se o outboxing acontecer automaticamente, dará erro na linha abaixo
-            * já que a String do JS não tem o método getBytes
-            **/
-            const javaByteArray = StandardCharsets.UTF_8.encode(javaString);
+            const javaByteArray = StandardCharsets.UTF_8.encode(javaString).array();
             expect(javaByteArray.length).to.equals(5);
         });
     });
