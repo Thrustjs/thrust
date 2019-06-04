@@ -1,3 +1,0 @@
-exports = {
-    value: 'folder/index'
-}

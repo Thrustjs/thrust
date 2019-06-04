@@ -28,7 +28,7 @@ Você também pode criar os seus próprios bitcodes e utilizá-los em seus *thru
 
  2 - O cli ```thrust``` agora estará disponível em seu terminal.
 
-Agora, você poderá usar ```thrust init [/home/user/projects/thrust-test]``` para inicializar um novo app Thrust no diretório corrente ou no que foi passado como argumento.
+Agora, você poderá usar ```thrust init [/home/user/projects/thrust-test.js]``` para inicializar um novo app Thrust no diretório corrente ou no que foi passado como argumento.
 
 Você pode passar uma opção para init chamada ```-t|-template```, para iniciar o seu projeto com um *seed* específico, o padrão no caso em que a opção não é passada é **[thrust-seeds/web-complete]**.
 

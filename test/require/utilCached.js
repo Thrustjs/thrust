@@ -1,3 +1,0 @@
-exports = {
-  number: Math.random()
-}
