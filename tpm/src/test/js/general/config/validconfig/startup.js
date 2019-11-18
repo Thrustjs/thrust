@@ -1,0 +1,1 @@
+print(getConfig().constructor.name === 'Object' && getConfig().name === 'thrust')

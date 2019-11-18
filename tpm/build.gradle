@@ -1,0 +1,62 @@
+/*
+ * build.gradle for tpm
+ */
+
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.spotbugs' version '2.0.0'
+    id 'jacoco' 
+}
+
+version='0.1.0'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'org.json:json:20190722'
+    compile 'commons-io:commons-io:2.6'
+    
+    testImplementation 'junit:junit:4.12'
+}
+
+application {
+    mainClassName = 'br.com.softbox.tpm.Tpm'
+}
+
+spotbugs {
+	toolVersion = '3.1.12'
+}
+
+tasks.withType(com.github.spotbugs.SpotBugsTask) {
+  	reports {
+		xml.enabled = false
+		html.enabled = true
+	}
+}
+
+jacoco {
+    toolVersion = "0.8.5"
+    reportsDir = file("$buildDir/customJacocoReportDir")
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination file("${buildDir}/jacocoHtml")
+    }
+}
+
+task jarBinary(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'TPM',  
+        	'Implementation-Version': version,
+        	'Main-Class': 'br.com.softbox.tpm.Tpm'
+    }
+    baseName = 'tpm'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}

@@ -1,7 +1,0 @@
-{
-  "name": "thrust-test",
-  "version": "0.5.3",
-  "dependencies": [
-    "majesty"
-  ]
-}

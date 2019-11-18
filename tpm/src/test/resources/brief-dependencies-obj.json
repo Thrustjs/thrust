@@ -1,0 +1,11 @@
+{
+  "name": "empty-dependencies",
+  "version": "1.0.0",
+  "dependencies": [
+    {
+      "bitcode": "asa" 
+    },
+    "filesystem",
+    "org:junit:2019757"
+  ]
+}

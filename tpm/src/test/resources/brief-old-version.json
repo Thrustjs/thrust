@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "dependencies": {
+    "jars": [
+    	"foo:foo:1.0.0"
+    ],
+    "bitcodes": []
+  }
+}

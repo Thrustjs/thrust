@@ -1,0 +1,1 @@
+console.log(__ROOT_DIR__)

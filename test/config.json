@@ -1,7 +1,0 @@
-{
-	"cacheScript": true,
-	"loadToGlobal": [
-		"thrust-bitcodes/globalBitCode1",
-		"globalBitCode2"
-	]
-}

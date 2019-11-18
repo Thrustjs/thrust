@@ -17,7 +17,7 @@ lib-cov
 # Coverage directory used by tools like istanbul
 coverage
 
-# nyc test coverage
+# nyc test.js coverage
 .nyc_output
 
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
@@ -68,12 +68,14 @@ todo.txt
 dist/seed
 /.metadata/
 .classpath
+.idea
 
 /test/teste_log*
 
-# test/.lib/bitcodes/thrust-bitcodes/majesty
-# test/.lib/bitcodes/thrust-bitcodes/majesty-report-console
+# test.js/.lib/bitcodes/thrust-bitcodes/majesty
+# test.js/.lib/bitcodes/thrust-bitcodes/majesty-report-console
 
 *.bak
 *.7z
 test/lixo*
+/local-install-dir/

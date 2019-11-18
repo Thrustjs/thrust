@@ -1,0 +1,8 @@
+{
+  "path": "src",
+  "name": "config-sample",
+  "description": "Thrust project",
+  "main": "src/index.js",
+  "version": "0.0.1",
+  "dependencies": ["filesystem@0.1.1"]
+}

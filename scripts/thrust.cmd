@@ -1,1 +1,0 @@
-jjs -strict --language=es6 %~dp0/../lib/thrust.js -- %*

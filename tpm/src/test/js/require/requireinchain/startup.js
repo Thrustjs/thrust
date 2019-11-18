@@ -1,0 +1,1 @@
+let module = require('./folder/module')

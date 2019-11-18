@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+    id 'application'
+    id "com.github.spotbugs" version "2.0.0"
+    id 'jacoco' 
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'org.graalvm.js:js:19.2.0.1'
+    compile 'org.graalvm.sdk:graal-sdk:19.2.0.1'
+    
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.graalvm.tools:chromeinspector:19.2.0.1'
+}
+
+application {
+    mainClassName = 'br.com.softbox.thrust.core.Thrust'
+}
+
+spotbugs {
+	toolVersion = '3.1.12'
+}
+
+tasks.withType(com.github.spotbugs.SpotBugsTask) {
+  	reports {
+		xml.enabled = false
+		html.enabled = true
+	}
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'br.com.softbox.thrust.core.Thrust'
+    }
+}
+
+jacoco {
+    toolVersion = "0.8.5"
+    reportsDir = file("$buildDir/customJacocoReportDir")
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination file("${buildDir}/jacocoHtml")
+    }
+}

@@ -1,0 +1,85 @@
+#!/bin/sh
+
+# ==================================================
+# Script for thrust
+# @author oz@softbox.com.br
+# ==================================================
+
+# ***********************************
+# Global variable
+# ***********************************
+
+JAVA=
+THRUST_JAR=
+THRUST_DIR=
+
+# ***********************************
+# Functions
+# ***********************************
+
+readGraalHome()
+{
+    THRUST_DIR=$(dirname "$0")
+    if [ -z "${GRAALVM_HOME}" ]; then
+        GRAALVM_HOME=${THRUST_DIR}/graalvm
+        if [ ! -d "${THRUST_DIR}/graalvm" ]; then
+            OUTPUT=$(java -version 2>&1 | grep -ic "graalvm")
+            if [ ${OUTPUT} -gt 0 ]; then
+                JAVA=$(which java)
+                GRAALVM_HOME=$(dirname "${JAVA}")
+                OUTPUT=$(echo ${GRAALVM_HOME} | grep -ce "^/.*/bin$")
+                if [ $OUTPUT -eq 1 ]; then
+                    GRAALVM_HOME=$(dirname "${GRAALVM_HOME}")
+                fi
+            fi
+            if [ -z "${GRAALVM_HOME}" ]; then
+                echo "\e[31mError\e[m: Enviroment variable '\e[1mGRAALVM_HOME\e[m' not found" >&2
+                exit 1
+            fi
+        fi
+    fi
+}
+
+locateJavaGraal()
+{
+    if [ -z "${JAVA}" ]; then
+        JAVA=${GRAALVM_HOME}/bin/java
+    fi
+    if [ ! -e "${JAVA}" ]; then
+        echo "\e[31mError\e[m: Java from GraalVM not found" >&2
+        exit 2
+    fi
+    if [ ! -x "${JAVA}" ]; then
+        echo "\e[31mError\e[m: Cannot execute Java from GraalVM" >&2
+        exit 3
+    fi
+}
+
+locateThrustJar()
+{
+    THRUST_LIB_DIR=${THRUST_DIR}/jars
+    if [ ! -d "${THRUST_LIB_DIR}" ]; then
+        echo "\e[31mError\e[m: Thrust \e[1mlib\e[m directory was not found: ${THRUST_LIB_DIR}." >&2
+        exit 4
+    fi
+    THRUST_JAR=${THRUST_LIB_DIR}/thrust.jar
+    if [ ! -e "${THRUST_JAR}" ]; then
+        echo "\e[31mError\e[m: \e[1mtrhust.jar\e[m not found here: ${THRUST_LIB_DIR}." >&2
+        exit 5
+    fi
+}
+
+readVariables() 
+{
+    readGraalHome
+    locateJavaGraal
+    locateThrustJar
+}
+
+# ***********************************
+# Main entry
+# ***********************************
+
+readVariables
+$JAVA -jar ${THRUST_JAR} $*
+
