@@ -32,22 +32,23 @@ Utilizando a `GraalVM`, o interpretador deixa de ser o `Nashorn` e passa a ser o
 Temos algumas quebras de API entre um interpretador e outro,
 o *migration* guide, disponibilizado pelo próprio `GraalJS`, pode ser acessado em [NashornMigrationGuide.md](https://github.com/graalvm/graaljs/blob/master/docs/user/NashornMigrationGuide.md)
 
-E na versão **0.8.0**, o *thrust* foi totalamente reescrito para utlizar o GraalJS como interpretador padrão. Logo, já esperamos que alguns *bitcodes* e códigos das versões anteriores deixem de funcionar devido a algumas incompatibilidades.
+E na versão **0.8.0**, o *thrust* foi totalmente reescrito para utlizar o GraalJS como interpretador padrão. Logo, já esperamos que alguns *bitcodes* e códigos das versões anteriores deixem de funcionar devido a algumas incompatibilidades.
 
 ## Instalação
 
-Você pode instalar o *thrust* a partir deste repositório. Segue um guia rápido para isto em uma máquina Linux:
+Você pode instalar o *thrust* a partir deste repositório. Segue aqui um guia rápido para instalar os *scripts* e executáveis:
 
 - Baixe este repositório em sua máquina.
 - Confirme se há instalado o [curl](https://curl.haxx.se/) ou o [wget](https://www.gnu.org/software/wget/).
-- Acesse pelo terminal o diretório em que está o repositório do fonte do Thrust:
-- Execute o comando script [install-thrust-from-here.sh](install-thrust-from-here.sh):
+- Acesse pelo terminal o diretório em que está o repositório do Thrust:
+- Execute o script [install-thrust-from-here.sh](install-thrust-from-here.sh):
 
 ```sh
 sh ./install-thrust-from-here.sh
 ```
 
-- Aguarde a execução deste, que irá instalar o *thrust* em `/opt/thrust`.
+- Aguarde o *script* ser executador.
+  - Ele irá instalar o *thrust* em `/opt/thrust`, por padrão.
   - Se desejar instalar o *thrust* em outro diretório, informe o diretório após o parâmetro `-d`. Por exemplo:
 
 ```sh
@@ -71,20 +72,20 @@ thrust -v
 
 que irá apresentar a versão corrente do *thrust*.
 
-Mais detalhes do *thrust* veja a documentação dele em [README.md](./thrust-core/README.md).
+Mais detalhes do *thrust* veja a documentação dele em sua documentação em: [README.md](./thrust-core/README.md).
 
 ### Imagem docker do thrust
 
 Fornecemos aqui o arquivo [Dockerfile](./Dockerfile), para você criar uma imagem [Docker](https://www.docker.com) com *thrust* instalado.
 
-Por exemplo, se há o Docker instalado em sua máquina; por exemplo, crie a imagem com o seguinte comando:
+Por exemplo, se há o Docker instalado em sua máquina; crie a imagem com o seguinte comando:
 
 ```sh
 # Sim temos um ponto aqui no fim do comando
 docker build -t thrust-image .
 ```
 
-Aqui estamos criando uma imagem local com o nome `thrust-image` (Você pode escolher o nome da imagem que você desejar ;-) ). Com a imagem criada, você pode executar os comandos do *thrust* e do *tpm*.
+Aqui estamos criando uma imagem local com o nome `thrust-image` (Você pode escolher o nome da imagem que você desejar). Com a imagem criada, você pode executar os comandos do *thrust* e do *tpm*.
 
 Por exemplo, suponha que você está dentro da raiz de um projeto *thrust*; e que há o *script* `src/index.js`; com base na imagem que montei acima, eu posso executar:
 
@@ -96,7 +97,7 @@ docker run -it --rm -v $(pwd):/thrust-project thrust-image thrust /thrust-projec
 
 A partir da versão **0.8.0**, o CLI do *thrust* foi separado de seu [core](./thrust/core),
 e passou a ser chamado de **TPM** (*Thrust Package Management*).
-Mais detalhes, veja aqui na documentação contida no arquivo [README.md](./tpm/README.md), que nos apresenta
+Mais detalhes, veja aqui na documentação contida no seu arquivo [README.md](./tpm/README.md), que nos apresenta
 os principais comandos do *tpm*.
 
 ## Novidades

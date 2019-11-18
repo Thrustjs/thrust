@@ -5,7 +5,7 @@ O *tpm* é o programa de linha de comando de **CLI** do *thrust*.
 Considerando que o *thrust* esteja instalado em sua máquina, confirme se o *tpm* esteja disponível em sua linha de comando. Por exemplo, confirme a versão do *tpm*:
 
 ```sh
-tpm -version
+tpm -v
 ```
 
 Caso o comando não seja encontrado, revise a instalação do *thrust* e as variáveis de seu ambiente que informam o caminho para o *thrust*.
