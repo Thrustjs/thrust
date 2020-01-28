@@ -82,30 +82,11 @@ function cliHelp(runInfo) {
 	print('usage: thrust <command> [<args>] [<options>]')
 	print()
 	
-	print('Available commands:')
+	print('Available commands for Thrust 0.4.3-2:')
 	print()
 	
 	CLI_COMMANDS.forEach(function(cliCmd) {
 		var cmdHelp = cliCmd.name.join(', ') + '   ' + cliCmd.description
 		print(cmdHelp)
-		
-//		if (cliCmd.args.length > 0) {
-//			print(cliCmd.args.map(function(arg) {
-//				var name = arg.required ? arg.name : '[' + arg.name + ']'
-//				return name + ' - ' + arg.description
-//			}).join(' '))
-//		}
-		
-//		if (cliCmd.options && cliCmd.options.length > 0) {
-//			print('Options: ')
-//			print(cliCmd.options.map(function(opt) {
-//				return opt.name.map(function(name) {
-//					return '-'.concat(name)
-//				}).join(', ') + '    ' + opt.description
-//			}).join('\n'))
-//		}
 	})
-	
-//	print()
-//	print('Use thrust <command> -h for specific help on some command')
 }

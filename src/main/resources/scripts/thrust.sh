@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Thrust 0.4.3-2
+
 # Setup the JVM
 if [ "x$JAVA" = "x" ]; then
   if [ "x$JAVA_HOME" != "x" ]; then

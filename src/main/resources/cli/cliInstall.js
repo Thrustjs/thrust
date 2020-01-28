@@ -7,13 +7,18 @@ var FileOutputStream = Java.type("java.io.FileOutputStream")
 var Long = Java.type("java.lang.Long")
 var FilenameFilter = Java.type("java.io.FilenameFilter")
 var FileUtils = Java.type("org.apache.commons.io.FileUtils")
+var System = Java.type('java.lang.System')
 
 var repoDownloder = require('/util/repoDownloader')
 var Utils = require("/util/util")
 
 var DEF_BITCODES_OWNER = "thrust-bitcodes"
 
-var MAVEN_BASE_URL = "http://central.maven.org/maven2/{0}/{1}/{2}/{3}"; //group/name/version/jarName
+var MAVEN_BASE_URL = "https://repo1.maven.org/maven2/{0}/{1}/{2}/{3}"; //group/name/version/jarName
+
+if (System.getenv('THRUST_MAVEN_BASE_URL')) {
+	MAVEN_BASE_URL = System.getenv('THRUST_MAVEN_BASE_URL')
+}
 
 var LIB_PATH = ".lib"
 var LIB_PATH_BITCODE = Paths.get(LIB_PATH, "bitcodes").toString()
